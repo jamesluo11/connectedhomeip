@@ -59,12 +59,12 @@
 
 using namespace chip;
 using namespace chip::app::Clusters::Scenes;
-
+#if 0
 uint8_t emberAfPluginScenesServerEntriesInUse = 0;
 #if !defined(EMBER_AF_PLUGIN_SCENES_USE_TOKENS) || defined(EZSP_HOST)
 EmberAfSceneTableEntry emberAfPluginScenesServerSceneTable[EMBER_AF_PLUGIN_SCENES_TABLE_SIZE];
 #endif
-
+#endif
 static bool readServerAttribute(EndpointId endpoint, ClusterId clusterId, AttributeId attributeId, const char * name,
                                 uint8_t * data, uint8_t size)
 {
@@ -104,7 +104,7 @@ bool isEndpointInGroup(chip::FabricIndex fabricIndex, EndpointId endpoint, Group
     return (groupId == ZCL_SCENES_GLOBAL_SCENE_GROUP_ID);
 #endif // EMBER_AF_PLUGIN_GROUPS_SERVER
 }
-
+#if 0
 void emberAfScenesClusterServerInitCallback(EndpointId endpoint)
 {
 #ifdef EMBER_AF_PLUGIN_SCENES_NAME_SUPPORT
@@ -1320,5 +1320,5 @@ void emberAfScenesClusterRemoveScenesInGroupCallback(EndpointId endpoint, GroupI
         }
     }
 }
-
+#endif
 void MatterScenesPluginServerInitCallback() {}
