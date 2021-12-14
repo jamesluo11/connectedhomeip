@@ -31,6 +31,11 @@
 #include <lwip/opt.h>
 
 #if defined(LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS)
+//beken workaround for ld
+#undef htons
+#undef ntohs
+#undef htonl
+#undef ntohl
 #define htons(x) lwip_htons(x)
 #define ntohs(x) lwip_ntohs(x)
 #define htonl(x) lwip_htonl(x)
