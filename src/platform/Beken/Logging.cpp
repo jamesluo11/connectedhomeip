@@ -19,7 +19,7 @@
 /**
  *    @file
  *          Provides implementations for the CHIP logging functions
- *          on the Ameba platform.
+ *          on the Beken platform.
  */
 /* this file behaves like a config.h, comes first */
 #include <platform/logging/LogV.h>
@@ -28,6 +28,7 @@
 #include <support/logging/Constants.h>
 
 #include <stdio.h>
+extern "C" void bk_printf(const char *fmt, ...);
 
 #ifdef LOG_LOCAL_LEVEL
 #undef LOG_LOCAL_LEVEL
@@ -50,14 +51,14 @@ void LogV(const char * module, uint8_t category, const char * msg, va_list v)
     switch (category)
     {
     case kLogCategory_Error:
-        printf("%s %s\r\n", tag, formattedMsg);
+        bk_printf("%s %s\r\n", tag, formattedMsg);
         break;
     case kLogCategory_Progress:
     default:
-        printf("%s %s\r\n", tag, formattedMsg);
+        bk_printf("%s %s\r\n", tag, formattedMsg);
         break;
     case kLogCategory_Detail:
-        printf("%s %s\r\n", tag, formattedMsg);
+        bk_printf("%s %s\r\n", tag, formattedMsg);
         break;
     }
 }

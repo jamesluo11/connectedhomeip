@@ -46,12 +46,14 @@ using namespace ::chip::DeviceLayer;
 #define QRCODE_BASE_URL "https://dhrishi.github.io/connectedhomeip/qrcode.html"
 #define EXAMPLE_VENDOR_TAG_IP 1
 
+#if 0
 #ifdef CONFIG_PLATFORM_8721D
 #define STATUS_LED_GPIO_NUM PB_5
 #elif defined(CONFIG_PLATFORM_8710C)
 #define STATUS_LED_GPIO_NUM PA_20
 #else
 #define STATUS_LED_GPIO_NUM NC
+#endif
 #endif
 
 static DeviceCallbacks EchoCallbacks;
@@ -82,25 +84,25 @@ std::string createSetupPayload()
     err = ConfigurationMgr().GetSetupDiscriminator(discriminator);
     if (err != CHIP_NO_ERROR)
     {
-        printf("Couldn't get discriminator: %s\r\n", ErrorStr(err));
+        ChipLogProgress("Couldn't get discriminator: %s\r\n", ErrorStr(err));
         return result;
     }
-    printf("Setup discriminator: %u (0x%x)\r\n", discriminator, discriminator);
+    ChipLogProgress("Setup discriminator: %u (0x%x)\r\n", discriminator, discriminator);
 
     uint32_t setupPINCode;
     err = ConfigurationMgr().GetSetupPinCode(setupPINCode);
     if (err != CHIP_NO_ERROR)
     {
-        printf("Couldn't get setupPINCode: %s\r\n", ErrorStr(err));
+        ChipLogProgress("Couldn't get setupPINCode: %s\r\n", ErrorStr(err));
         return result;
     }
-    printf("Setup PIN code: %u (0x%x)\r\n", setupPINCode, setupPINCode);
+    ChipLogProgress("Setup PIN code: %u (0x%x)\r\n", setupPINCode, setupPINCode);
 
     uint16_t vendorId;
     err = ConfigurationMgr().GetVendorId(vendorId);
     if (err != CHIP_NO_ERROR)
     {
-        printf("Couldn't get vendorId: %s\r\n", ErrorStr(err));
+        ChipLogProgress("Couldn't get vendorId: %s\r\n", ErrorStr(err));
         return result;
     }
 
@@ -108,7 +110,7 @@ std::string createSetupPayload()
     err = ConfigurationMgr().GetProductId(productId);
     if (err != CHIP_NO_ERROR)
     {
-        printf("Couldn't get productId: %s\r\n", ErrorStr(err));
+        ChipLogProgress("Couldn't get productId: %s\r\n", ErrorStr(err));
         return result;
     }
 
@@ -144,11 +146,11 @@ std::string createSetupPayload()
 
         if (generator.payloadDecimalStringRepresentation(outCode) == CHIP_NO_ERROR)
         {
-            printf("Short Manual(decimal) setup code: %s\r\n", outCode.c_str());
+            ChipLogProgress("Short Manual(decimal) setup code: %s\r\n", outCode.c_str());
         }
         else
         {
-            printf("Failed to get decimal setup code\r\n");
+            ChipLogProgress("Failed to get decimal setup code\r\n");
         }
 
         payload.commissioningFlow = CommissioningFlow::kCustom;
@@ -157,17 +159,17 @@ std::string createSetupPayload()
         if (generator.payloadDecimalStringRepresentation(outCode) == CHIP_NO_ERROR)
         {
             // intentional extra space here to align the log with the short code
-            printf("Long Manual(decimal) setup code:  %s\r\n", outCode.c_str());
+            ChipLogProgress("Long Manual(decimal) setup code:  %s\r\n", outCode.c_str());
         }
         else
         {
-            printf("Failed to get decimal setup code\r\n");
+            ChipLogProgress("Failed to get decimal setup code\r\n");
         }
     }
 
     if (err != CHIP_NO_ERROR)
     {
-        printf("Couldn't get payload string %\r\n" CHIP_ERROR_FORMAT, err.Format());
+        ChipLogProgress("Couldn't get payload string %\r\n" CHIP_ERROR_FORMAT, err.Format());
     }
 #endif
     return "ff";
@@ -209,50 +211,52 @@ static Identify gIdentify1 = {
     chip::EndpointId{ 1 }, OnIdentifyStart, OnIdentifyStop, EMBER_ZCL_IDENTIFY_IDENTIFY_TYPE_VISIBLE_LED, OnTriggerEffect,
 };
 
+//Warkaround for ld error:undefined reference to '__sync_synchronize'
+//refer to https://stackoverflow.com/questions/64658430/gnu-arm-embedded-toolchain-undefined-reference-to-sync-synchronize
+extern "C" void __sync_synchronize() {}
+
+
 extern "C" void ChipTest(void)
 {
-	printf("In ChipTest()\r\n");
-
-#if 0
-    printf("In ChipTest()\r\n");
+    ChipLogProgress(Zcl, "ChipTest");
     CHIP_ERROR err = CHIP_NO_ERROR;
-
-    printf("initPrefr\n");
-    initPref();
+#if 0
+    ChipLogProgress(Zcl, "initPrefr\n");
+    //initPref();
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
     err                           = deviceMgr.Init(&EchoCallbacks);
 
     if (err != CHIP_NO_ERROR)
     {
-        printf("DeviceManagerInit() - ERROR!\r\n");
+        ChipLogProgress(Zcl, "DeviceManagerInit() - ERROR!\r\n");
     }
     else
     {
-        printf("DeviceManagerInit() - OK\r\n");
+        ChipLogProgress(Zcl, "DeviceManagerInit() - OK\r\n");
     }
 
     chip::Server::GetInstance().Init();
 
     // Initialize device attestation config
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
-
+#if 0
     std::string qrCodeText = createSetupPayload();
 
-    printf("QR CODE Text: '%s'\r\n", qrCodeText.c_str());
+    ChipLogProgress(Zcl, "QR CODE Text: '%s'\r\n", qrCodeText.c_str());
 
     {
         std::vector<char> qrCode(3 * qrCodeText.size() + 1);
         err = EncodeQRCodeToUrl(qrCodeText.c_str(), qrCodeText.size(), qrCode.data(), qrCode.max_size());
         if (err == CHIP_NO_ERROR)
         {
-            printf("Copy/paste the below URL in a browser to see the QR CODE:\n\t%s?data=%s", QRCODE_BASE_URL, qrCode.data());
+            ChipLogProgress(Zcl, "Copy/paste the below URL in a browser to see the QR CODE:\n\t%s?data=%s", QRCODE_BASE_URL, qrCode.data());
         }
     }
-    printf("\n\n");
+    ChipLogProgress(Zcl, "\n\n");
 
-    statusLED1.Init(STATUS_LED_GPIO_NUM);
-
+    //statusLED1.Init(STATUS_LED_GPIO_NUM);
+#endif
     while (true)
         vTaskDelay(pdMS_TO_TICKS(50));
 #endif

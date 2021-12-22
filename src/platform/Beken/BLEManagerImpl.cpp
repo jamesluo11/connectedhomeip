@@ -528,6 +528,7 @@ bool BLEManagerImpl::CloseConnection(BLE_CONNECTION_OBJECT conId)
 uint16_t BLEManagerImpl::GetMTU(BLE_CONNECTION_OBJECT conId) const
 {
 #if 0
+    //TODO beken : need our API to configure BLE parameter
     int mtu;
     mtu = ble_att_mtu_z2(conId);
     return mtu;
@@ -587,7 +588,7 @@ exit:
 
 CHIP_ERROR BLEManagerImpl::ConfigureAdvertisingData(void)
 {
-#if 0
+#if 1
     CHIP_ERROR err;
     uint8_t advData[MAX_ADV_DATA_LEN]    = { 0 };
     uint8_t advPayload[MAX_ADV_DATA_LEN] = { 0 };
@@ -597,7 +598,7 @@ CHIP_ERROR BLEManagerImpl::ConfigureAdvertisingData(void)
     uint32_t bleAdvTimeoutMs;
     uint16_t adv_int_min;
     uint16_t adv_int_max;
-    T_GAP_DEV_STATE new_state;
+    //T_GAP_DEV_STATE new_state;
 
     // If the device name is not specified, generate a CHIP-standard name based on the bottom digits of the Chip device id.
     uint16_t discriminator;
@@ -609,8 +610,8 @@ CHIP_ERROR BLEManagerImpl::ConfigureAdvertisingData(void)
         mDeviceName[kMaxDeviceNameLength] = 0;
     }
 
-    // Configure the BLE device name.
-    le_set_gap_param(GAP_PARAM_DEVICE_NAME, kMaxDeviceNameLength, mDeviceName);
+    // TODO beken Configure the BLE device name.
+    //le_set_gap_param(GAP_PARAM_DEVICE_NAME, kMaxDeviceNameLength, mDeviceName);
 
     /**************** Prepare advertising data *******************************************/
     memset(advData, 0, sizeof(advData));
@@ -645,9 +646,10 @@ CHIP_ERROR BLEManagerImpl::ConfigureAdvertisingData(void)
         adv_int_max     = CHIP_DEVICE_CONFIG_BLE_SLOW_ADVERTISING_INTERVAL_MAX;
         bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_TIMEOUT;
     }
-    le_adv_set_param(GAP_PARAM_ADV_INTERVAL_MIN, sizeof(adv_int_min), &adv_int_min);
-    le_adv_set_param(GAP_PARAM_ADV_INTERVAL_MAX, sizeof(adv_int_max), &adv_int_max);
-    le_adv_set_param(GAP_PARAM_ADV_DATA, sizeof(advData), (void *) advData); // set advData
+    //TODO beken : need our API to configure BLE parameter
+    //le_adv_set_param(GAP_PARAM_ADV_INTERVAL_MIN, sizeof(adv_int_min), &adv_int_min);
+   // le_adv_set_param(GAP_PARAM_ADV_INTERVAL_MAX, sizeof(adv_int_max), &adv_int_max);
+    //le_adv_set_param(GAP_PARAM_ADV_DATA, sizeof(advData), (void *) advData); // set advData
 
 exit:
     return err;
@@ -657,16 +659,17 @@ exit:
 
 CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 {
-#if 0
+#if 1
     CHIP_ERROR err = CHIP_NO_ERROR;
 
     err = ConfigureAdvertisingData();
     SuccessOrExit(err);
 
     // Start advertising
-    le_adv_stop();
-    vTaskDelay(100);
-    le_adv_start();
+    //TODO beken : need our BLE API
+    //le_adv_stop();
+    //vTaskDelay(100);
+    //le_adv_start();
 
     mFlags.Set(Flags::kAdvertising);
     mFlags.Clear(Flags::kRestartAdvertising);
@@ -767,7 +770,7 @@ exit:
         mServiceMode = ConnectivityManager::kCHIPoBLEServiceMode_Disabled;
     }
 }
-#if 0
+#if 1
 void BLEManagerImpl::DriveBLEState(intptr_t arg)
 {
     sInstance.DriveBLEState();
