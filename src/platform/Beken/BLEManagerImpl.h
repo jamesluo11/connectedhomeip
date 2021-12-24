@@ -20,12 +20,11 @@
 
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
 #include "FreeRTOS.h"
-//#include "app_msg.h"
-//#include "bt_matter_adapter_peripheral_app.h"
-//#include "bt_matter_adapter_service.h"
 #include "event_groups.h"
-//#include "gap_msg.h"
-//#include "timers.h"
+
+#include "ble_api_5_x.h"
+#include "rtos_pub.h"
+#include "timers.h"
 
 namespace chip {
 namespace DeviceLayer {
@@ -36,7 +35,10 @@ using namespace chip::Ble;
 /**
  * Concrete implementation of the BLEManager singleton object for the Ameba platforms.
  */
-class BLEManagerImpl final : public BLEManager, private BleLayer, private BlePlatformDelegate, private BleApplicationDelegate
+class BLEManagerImpl final : public BLEManager,
+                            private BleLayer,
+                            private BlePlatformDelegate,
+                            private BleApplicationDelegate
 {
     // Allow the BLEManager interface class to delegate method calls to
     // the implementation methods provided by this class.
@@ -88,27 +90,28 @@ private:
     static BLEManagerImpl sInstance;
 
     // ===== Private members reserved for use by this class only.
-
-    typedef enum
-    {
-        BC_DEV_DISABLED     = 0x0,
-        BC_DEV_INIT         = 0x1,
-        BC_DEV_IDLE         = 0x2,
-        BC_DEV_BT_CONNECTED = 0x3,
-        BC_DEV_DEINIT       = 0x4,
-    } BC_device_state_t;
-
-    enum class Flags : uint8_t
+    enum class Flags : uint32_t
     {
         kAdvertisingEnabled       = 0x0001,
-        kFastAdvertisingEnabled   = 0x0002,
-        kAdvertising              = 0x0004,
-        kRestartAdvertising       = 0x0008,
-        kAMEBABLEStackInitialized = 0x0010,
-        kDeviceNameSet            = 0x0020,
-        kAdvertisingRefreshNeeded = 0x030,
-        kAdvertisingConfigured    = 0x040,
+        kAdvertisingRefreshNeeded = 0x0002,
+        kFastAdvertisingEnabled   = 0x0004,
+        kSlowAdvertisingEnabled   = 0x0008,
+        kAdvertisingIsFastADV     = 0x0010,
+        kAMEBABLEStackInitialized = 0x0020,
+        kDeviceNameSet            = 0x0040,
+        kDeviceNameDefSet         = 0x0080,
+
+        kBekenBLESGATTSReady      = 0x00100,
+        kBEKENBLEADVCreate        = 0x00200,
+        kBEKENBLEADVSetData       = 0x00400,
+        kBEKENBLEADVSetRsp        = 0x00800,
+        kBEKENBLEADVStarted       = 0x01000,
+        kBEKENBLEADVStop          = 0x02000,
+        kBEKENBLEADVDelet         = 0x04000,
+        kBEKENBLEAdvTimer         = 0x08000,
+        kBEKENBLEAdvTimerRun      = 0x10000,
     };
+
     BitFlags<BLEManagerImpl::Flags> mFlags;
 
     enum
@@ -120,12 +123,27 @@ private:
 
     struct CHIPoBLEConState
     {
-        uint16_t mtu : 10;
+        uint8_t conn_idx;
+        uint16_t mtu : 16;
         uint16_t allocated : 1;
         uint16_t subscribed : 1;
-        uint16_t unused : 4;
-        uint8_t connectionHandle;
-        uint8_t bondingHandle;
+        uint16_t unused : 6;
+        void Set(uint16_t conId)
+        {
+            conn_idx      = conId;
+            mtu           = 0;
+            allocated     = 1;
+            subscribed    = 0;
+            unused        = 0;
+        }
+        void Reset()
+        {
+            conn_idx      = kUnusedIndex;
+            mtu           = 0;
+            allocated     = 0;
+            subscribed    = 0;
+            unused        = 0;
+        }
     };
     CHIPoBLEConState mBleConnections[kMaxConnections];
 
@@ -133,7 +151,6 @@ private:
 
     uint16_t mNumGAPCons;
     uint16_t mTXCharCCCDAttrHandle;
-    uint16_t mSubscribedConIds[kMaxConnections];
     char mDeviceName[kMaxDeviceNameLength + 1];
     CHIP_ERROR MapBLEError(int bleErr);
 
@@ -143,9 +160,10 @@ private:
     CHIP_ERROR ConfigureAdvertisingData(void);
 
     void HandleRXCharWrite(uint8_t *, uint16_t, uint8_t);
-    void HandleTXCharRead(struct ble_gatt_char_context * param);
+    void HandleTXCharRead(void * param);
     void HandleTXCharCCCDRead(void * param);
-    void HandleTXCharCCCDWrite(int, int, int);
+    void HandleTXCharCCCDWrite(int, int, int ind = 0);
+    void HandleTXCharConfirm(CHIPoBLEConState * conState, int status);
     CHIP_ERROR HandleTXComplete(int);
     CHIP_ERROR HandleGAPConnect(uint16_t);
     CHIP_ERROR HandleGAPDisconnect(uint16_t, uint16_t);
@@ -154,17 +172,17 @@ private:
     bool IsSubscribed(uint16_t conId);
 
     bool RemoveConnection(uint8_t connectionHandle);
-    void AddConnection(uint8_t connectionHandle);
 
-    BLEManagerImpl::CHIPoBLEConState * GetConnectionState(uint8_t connectionHandle, bool allocate);
-    //static CHIP_ERROR ble_svr_gap_msg_event(void * param, T_IO_MSG * p_gap_msg);
-    //static CHIP_ERROR ble_svr_gap_event(void * param, int cb_type, void * p_cb_data);
-    //static CHIP_ERROR gatt_svr_chr_access(void * param, T_SERVER_ID service_id, TBTCONFIG_CALLBACK_DATA * p_data);
-    //static int ble_callback_dispatcher(void * param, void * p_cb_data, int type, T_CHIP_BLEMGR_CALLBACK_TYPE callback_type);
+    uint8_t adv_actv_idx;
+    BLEManagerImpl::CHIPoBLEConState * GetConnectionState(uint8_t connectionHandle, bool allocate = false);
+    static void ble_event_notice(ble_notice_t notice, void *param);
+    static void beken_ble_cmd_cb(ble_cmd_t cmd, ble_cmd_param_t *param);
     static void DriveBLEState(intptr_t arg);
-    //static void BleAdvTimeoutHandler(TimerHandle_t xTimer);
-    //static void CancelBleAdvTimeoutTimer(void);
-    //static void StartBleAdvTimeoutTimer(uint32_t aTimeoutInMs);
+    static void DriveBLEExtPerf(intptr_t arg);
+    static int beken_ble_init(void);
+    static void ble_adv_timer_timeout_handle(TimerHandle_t xTimer);
+    static void CancelBleAdvTimeoutTimer(void);
+    static void StartBleAdvTimeoutTimer(uint32_t aTimeoutInMs);
 };
 
 /**
@@ -206,7 +224,7 @@ inline bool BLEManagerImpl::_IsAdvertisingEnabled(void)
 
 inline bool BLEManagerImpl::_IsAdvertising(void)
 {
-    return mFlags.Has(Flags::kAdvertising);
+    return mFlags.Has(Flags::kBEKENBLEADVStarted);
 }
 
 } // namespace Internal
