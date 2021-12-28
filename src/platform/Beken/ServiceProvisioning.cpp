@@ -22,32 +22,25 @@
 
 #include "ServiceProvisioning.h"
 
-//#include <chip_porting.h>
+#include "include.h"
+#include "str_pub.h"
+#include "mem_pub.h"
+#include "wlan_ui_pub.h"
 
 using namespace ::chip::DeviceLayer;
 
 CHIP_ERROR SetWiFiStationProvisioning(const char * ssid, const char * key)
 {
-#if 0
-    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled);
-    rtw_wifi_setting_t wifiConfig;
+	network_InitTypeDef_st network_cfg;
 
-    // Set the wifi configuration
-    memset(&wifiConfig, 0, sizeof(wifiConfig));
-    memcpy(wifiConfig.ssid, ssid, strlen(ssid) + 1);
-    memcpy(wifiConfig.password, key, strlen(key) + 1);
-    wifiConfig.mode = RTW_MODE_STA;
+	os_memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
 
-    // Configure the WiFi interface.
-    int err = CHIP_SetWiFiConfig(&wifiConfig);
-    if (err != 0)
-    {
-        ChipLogError(DeviceLayer, "_SetWiFiConfig() failed: %d", err);
-        return CHIP_ERROR_INCORRECT_STATE;
-    }
+	network_cfg.wifi_mode = BK_STATION;
+	os_strcpy(network_cfg.wifi_ssid, ssid);
+	os_strcpy(network_cfg.wifi_key, key);
+	network_cfg.dhcp_mode = DHCP_CLIENT;
 
-    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled);
-    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
-#endif
-    return CHIP_NO_ERROR;
+	bk_wlan_start(&network_cfg);
+
+	return CHIP_NO_ERROR;
 }
