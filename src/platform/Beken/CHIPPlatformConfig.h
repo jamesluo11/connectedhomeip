@@ -99,6 +99,10 @@
 #define CHIP_CONFIG_BDX_MAX_NUM_TRANSFERS 1
 #endif // CHIP_CONFIG_BDX_MAX_NUM_TRANSFERS
 
+#ifndef CHIP_CONFIG_MAX_DEVICE_ADMINS
+#define CHIP_CONFIG_MAX_DEVICE_ADMINS 2
+#endif
+
 // ==================== Security Configuration Overrides ====================
 
 #ifndef CHIP_CONFIG_MAX_APPLICATION_GROUPS

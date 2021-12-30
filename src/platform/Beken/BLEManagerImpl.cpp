@@ -19,7 +19,7 @@
 /**
  *    @file
  *          Provides an implementation of the BLEManager singleton object
- *          for the Ameba platforms.
+ *          for the Beken platforms.
  */
 
 /* this file behaves like a config.h, comes first */
@@ -193,7 +193,7 @@ void BLEManagerImpl::HandleTXCharCCCDRead(void * param)
     conState = GetConnectionState(r_req->conn_idx);
 
     if(param == NULL) {
-        ChipLogError(DeviceLayer, "HandleTXCharCCCDRead failed: %s", param);
+        ChipLogError(DeviceLayer, "HandleTXCharCCCDRead failed");
         return;
 	}
 
@@ -589,7 +589,8 @@ void BLEManagerImpl::NotifyChipConnectionClosed(BLE_CONNECTION_OBJECT conId)
     // Nothing to do
 }
 
-extern ble_err_t bk_ble_send_ntf_value(uint32_t len, uint8_t *buf, uint16_t prf_id, uint16_t att_idx);
+extern "C" ble_err_t bk_ble_send_ntf_value(uint32_t len, uint8_t *buf, uint16_t prf_id, uint16_t att_idx);
+
 bool BLEManagerImpl::SendIndication(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId,
                                     PacketBufferHandle data)
 {
@@ -638,6 +639,8 @@ exit:
 CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
+
+    ChipLogProgress(DeviceLayer, "StartAdvertising...");
     if((!mFlags.Has(Flags::kDeviceNameSet)) && (!mFlags.Has(Flags::kDeviceNameDefSet))){
         err = sInstance.ConfigureAdvertisingData();
         SuccessOrExit(err);

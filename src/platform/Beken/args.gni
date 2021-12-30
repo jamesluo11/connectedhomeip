@@ -23,4 +23,3 @@ chip_build_tests = false
 chip_inet_config_enable_tun_endpoint = false
 chip_inet_config_enable_tcp_endpoint = true
 chip_inet_config_enable_udp_endpoint = true
-chip_config_memory_management = "platform"

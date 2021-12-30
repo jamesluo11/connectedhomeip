@@ -47,6 +47,7 @@ static_library("Beken") {
     "SoftwareUpdateManagerImpl.h",
     "SystemPlatformConfig.h",
     "SystemTimeSupport.cpp",
+    "CHIPMem-Platform.cpp",
   ]
 
   deps = [ "${chip_root}/src/lib/dnssd:platform_header" ]
