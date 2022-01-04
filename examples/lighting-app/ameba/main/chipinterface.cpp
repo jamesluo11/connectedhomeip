@@ -32,7 +32,7 @@
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/server/OnboardingCodesUtil.h>
 #include <lib/support/ErrorStr.h>
-#include <platform/Ameba/AmebaConfig.h>
+#include <platform/Beken/AmebaConfig.h>
 #include <setup_payload/ManualSetupPayloadGenerator.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
 

@@ -20,11 +20,13 @@
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
 #include <core/CHIPEncoding.h>
-#include <platform/Ameba/AmebaConfig.h>
+#include <platform/Beken/AmebaConfig.h>
 #include <support/CHIPMem.h>
 #include <support/CHIPMemString.h>
 #include <support/CodeUtils.h>
 #include <support/logging/CHIPLogging.h>
+#include "error.h"
+#include "flash_namespace_value.h"
 
 enum
 {
@@ -95,8 +97,23 @@ CHIP_ERROR AmebaConfig::ReadConfigValue(Key key, bool & val)
     if (success == 1)
         return CHIP_NO_ERROR;
     else
-#endif
         return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+#endif
+
+    uint32_t success = 0;
+    uint32_t out_length = 0;
+    uint8_t intval = 0;
+    success = bk_read_data( key.Namespace, key.Name, (char *)&intval,1,&out_length);
+
+    if (kNoErr !=success)
+        ChipLogProgress(DeviceLayer, "bk_read_data: %s  %s failed\n", (char *)key.Namespace, (char *)key.Name);
+
+    val = (intval != 0);
+    if (kNoErr == success)
+        return CHIP_NO_ERROR;
+    else
+        return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+
 }
 
 CHIP_ERROR AmebaConfig::ReadConfigValue(Key key, uint32_t & val)
@@ -111,7 +128,21 @@ CHIP_ERROR AmebaConfig::ReadConfigValue(Key key, uint32_t & val)
     if (success == 1)
         return CHIP_NO_ERROR;
     else
+    return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
 #endif
+    uint32_t success = 0;
+    uint32_t out_length = 0;
+    uint32_t temp_data = 0;
+
+    success = bk_read_data( key.Namespace, key.Name,(char *)&temp_data,sizeof(uint32_t),&out_length);
+
+    if (kNoErr !=success)
+        ChipLogProgress(DeviceLayer, "bk_read_data: %s  %s failed\n", (char *)key.Namespace, (char *)key.Name);
+    val = temp_data;
+
+    if (kNoErr == success)
+        return CHIP_NO_ERROR;
+    else
         return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
 }
 
@@ -122,13 +153,28 @@ CHIP_ERROR AmebaConfig::ReadConfigValue(Key key, uint64_t & val)
 
     success = getPref_u64_new(key.Namespace, key.Name, &val);
     if (!success)
-        ChipLogProgress(DeviceLayer, "getPref_u32_new: %s/%s failed\n", key.Namespace, key.Name);
+        ChipLogProgress(DeviceLayer, "getPref_u32_new: %s %s failed\n", key.Namespace, key.Name);
 
     if (success == 1)
         return CHIP_NO_ERROR;
     else
+    return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
 #endif
+    uint32_t success = 0;
+    uint32_t out_length = 0;
+    uint64_t temp_data = 0;
+
+    success = bk_read_data( key.Namespace, key.Name,(char *)&temp_data,sizeof(uint64_t),&out_length);
+
+    if (kNoErr !=success)
+        ChipLogProgress(DeviceLayer, "bk_read_data: %s  %s failed\n", (char *)key.Namespace, (char *)key.Name);
+    val = temp_data;
+
+    if (kNoErr == success)
+        return CHIP_NO_ERROR;
+    else
         return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+
 }
 
 CHIP_ERROR AmebaConfig::ReadConfigValueStr(Key key, char * buf, size_t bufSize, size_t & outLen)
@@ -150,7 +196,26 @@ CHIP_ERROR AmebaConfig::ReadConfigValueStr(Key key, char * buf, size_t bufSize, 
         return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
     }
 #endif
-	return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+
+    uint32_t success = 0;
+    uint32_t out_length = 0;
+
+    success = bk_read_data( key.Namespace, key.Name,buf,bufSize,&out_length);
+    outLen = out_length;
+
+    if (kNoErr !=success)
+        ChipLogProgress(DeviceLayer, "bk_read_data: %s  %s failed\n", (char *)key.Namespace, (char *)key.Name);
+
+    if (kNoErr == success)
+    {
+        return CHIP_NO_ERROR;
+    }
+    else
+    {
+        outLen = 0;
+        return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+    }
+
 }
 
 CHIP_ERROR AmebaConfig::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSize, size_t & outLen)
@@ -172,7 +237,26 @@ CHIP_ERROR AmebaConfig::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSiz
         return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
     }
 #endif
-	return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+
+    uint32_t success = 0;
+    uint32_t out_length = 0;
+
+    success = bk_read_data( key.Namespace, key.Name,(char *)buf,bufSize,&out_length);
+    outLen = out_length;
+
+    if (kNoErr !=success)
+        ChipLogProgress(DeviceLayer, "bk_read_data: %s  %s failed\n", (char *)key.Namespace, (char *)key.Name);
+
+    if (kNoErr == success)
+    {
+        return CHIP_NO_ERROR;
+    }
+    else
+    {
+        outLen = 0;
+        return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+    }
+
 }
 
 CHIP_ERROR AmebaConfig::WriteConfigValue(Key key, bool val)
@@ -188,8 +272,26 @@ CHIP_ERROR AmebaConfig::WriteConfigValue(Key key, bool val)
     success = setPref_new(key.Namespace, key.Name, &value, 1);
     if (!success)
         ChipLogError(DeviceLayer, "setPref: %s/%s = %s failed\n", key.Namespace, key.Name, value ? "true" : "false");
-#endif
     return CHIP_NO_ERROR;
+#endif
+    uint32_t success = 0;
+    uint8_t value = 0;
+
+    if (val == 1)
+    {
+        value = 1;
+    }
+    else
+    {
+        value = 0;
+    }
+    
+    success = bk_write_data( key.Namespace,key.Name, (char*)&value,1);
+    if (kNoErr != success)
+        ChipLogError(DeviceLayer, "bk_write_data: %s  %s  %s failed\n", (char *)key.Namespace, (char *)key.Name, value ? "true" : "false");
+    
+    return CHIP_NO_ERROR;
+
 }
 
 CHIP_ERROR AmebaConfig::WriteConfigValue(Key key, uint32_t val)
@@ -200,7 +302,14 @@ CHIP_ERROR AmebaConfig::WriteConfigValue(Key key, uint32_t val)
     success = setPref_new(key.Namespace, key.Name, (uint8_t *) &val, sizeof(uint32_t));
     if (!success)
         ChipLogError(DeviceLayer, "setPref: %s/%s = %d(0x%x) failed\n", key.Namespace, key.Name, val, val);
+    return CHIP_NO_ERROR;
 #endif
+    uint32_t success = 0;
+
+    success = bk_write_data( key.Namespace,key.Name, (char *)&val,sizeof(val));
+    if (kNoErr != success)
+        ChipLogError(DeviceLayer, "bk_write_data: %s  %s = %lu(0x%lx) failed\n", (char *)key.Namespace, (char *)key.Name, val, val);
+
     return CHIP_NO_ERROR;
 }
 
@@ -212,7 +321,15 @@ CHIP_ERROR AmebaConfig::WriteConfigValue(Key key, uint64_t val)
     success = setPref_new(key.Namespace, key.Name, (uint8_t *) &val, sizeof(uint64_t));
     if (!success)
         ChipLogError(DeviceLayer, "setPref: %s/%s = %d(0x%x) failed\n", key.Namespace, key.Name, val, val);
+    zreturn CHIP_NO_ERROR;
 #endif
+
+    uint32_t success = 0;
+
+    success = bk_write_data( key.Namespace,key.Name,(char *)&val,sizeof(val));
+    if (kNoErr != success)
+        ChipLogError(DeviceLayer, "bk_write_data: %s  %s = %llu(0x%llx) failed\n", (char *)key.Namespace, (char *)key.Name, val, val);
+
     return CHIP_NO_ERROR;
 }
 
@@ -224,8 +341,16 @@ CHIP_ERROR AmebaConfig::WriteConfigValueStr(Key key, const char * str)
     success = setPref_new(key.Namespace, key.Name, (uint8_t *) str, strlen(str) + 1);
     if (!success)
         ChipLogError(DeviceLayer, "setPref: %s/%s = %s failed\n", key.Namespace, key.Name, str);
-#endif
     return CHIP_NO_ERROR;
+#endif
+    uint32_t success = 0;
+
+    success = bk_write_data( key.Namespace,key.Name, (char *)str,strlen(str));
+    if (kNoErr != success)
+        ChipLogError(DeviceLayer, "bk_write_data: %s %s %s failed\n", (char *)key.Namespace, (char *)key.Name, (char *)str);
+
+    return CHIP_NO_ERROR;
+
 }
 
 CHIP_ERROR AmebaConfig::WriteConfigValueStr(Key key, const char * str, size_t strLen)
@@ -242,8 +367,17 @@ CHIP_ERROR AmebaConfig::WriteConfigValueStr(Key key, const char * str, size_t st
     }
     err = AmebaConfig::WriteConfigValueStr(key, strCopy.Get());
 exit:
-#endif
     return CHIP_NO_ERROR;
+#endif
+    uint32_t success = 0;
+    strLen = (strLen > strlen(str)) ?  strlen(str) : strLen;
+
+    success = bk_write_data( key.Namespace,key.Name, (char *)str,strLen);
+    if (kNoErr != success)
+        ChipLogError(DeviceLayer, "bk_write_data: %s %s %s failed\n", (char *)key.Namespace, (char *)key.Name, (char *)str);
+
+    return CHIP_NO_ERROR;
+
 }
 
 CHIP_ERROR AmebaConfig::WriteConfigValueBin(Key key, const uint8_t * data, size_t dataLen)
@@ -253,9 +387,18 @@ CHIP_ERROR AmebaConfig::WriteConfigValueBin(Key key, const uint8_t * data, size_
 
     success = setPref_new(key.Namespace, key.Name, (uint8_t *) data, dataLen);
     if (!success)
-        ChipLogError(DeviceLayer, "setPref: %s/%s failed\n", key.Namespace, key.Name);
-#endif
+        ChipLogError(DeviceLayer, "setPref: %s / %s failed\n", key.Namespace, key.Name);
     return CHIP_NO_ERROR;
+
+#endif
+    uint32_t success = 0;
+
+    success = bk_write_data( key.Namespace,key.Name,(char *)data, dataLen);
+    if (kNoErr != success)
+       ChipLogError(DeviceLayer, "bk_write_data: %s  %s failed \r\n", key.Namespace, key.Name);
+
+    return CHIP_NO_ERROR;
+
 }
 
 CHIP_ERROR AmebaConfig::ClearConfigValue(Key key)
@@ -266,14 +409,29 @@ CHIP_ERROR AmebaConfig::ClearConfigValue(Key key)
     success = deleteKey(key.Namespace, key.Name);
     if (!success)
         ChipLogProgress(DeviceLayer, "%s : %s/%s failed\n", __FUNCTION__, key.Namespace, key.Name);
+    return CHIP_NO_ERROR;
 #endif
+
+    uint32_t success = 0;
+
+    success = bk_clean_data(key.Namespace, key.Name);
+    if (kNoErr != success)
+        ChipLogProgress(DeviceLayer, "%s : %s  %s failed\n", __FUNCTION__, key.Namespace, key.Name);
     return CHIP_NO_ERROR;
 }
 
 bool AmebaConfig::ConfigValueExists(Key key)
 {
     //return checkExist(key.Namespace, key.Name);
-    return false;
+
+    if (kNoErr == bk_ensure_name_data(key.Namespace, key.Name))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 CHIP_ERROR AmebaConfig::EnsureNamespace(const char * ns)
@@ -286,8 +444,17 @@ CHIP_ERROR AmebaConfig::EnsureNamespace(const char * ns)
     {
         ChipLogError(DeviceLayer, "dct_register_module failed\n");
     }
-#endif
     return CHIP_NO_ERROR;
+#endif
+    uint32_t success = 0;
+
+    success = bk_ensure_namespace(ns);
+    if (kNoErr != success)
+    {
+        ChipLogError(DeviceLayer, "dct_register_module failed\n");
+    }
+    return CHIP_NO_ERROR;
+
 }
 
 CHIP_ERROR AmebaConfig::ClearNamespace(const char * ns)
@@ -300,8 +467,20 @@ CHIP_ERROR AmebaConfig::ClearNamespace(const char * ns)
     {
         ChipLogError(DeviceLayer, "ClearNamespace failed\n");
     }
-#endif
     return CHIP_NO_ERROR;
+
+    bK_clear_namespace ( const char * ucnamespace)
+#endif
+
+    uint32_t success = 0;
+
+    success = bK_clear_namespace(ns);
+    if (success != 0)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace failed\n");
+    }
+    return CHIP_NO_ERROR;
+
 }
 
 void AmebaConfig::RunConfigUnitTest() {}

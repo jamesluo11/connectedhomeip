@@ -24,7 +24,7 @@
 /* this file behaves like a config.h, comes first */
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-#include <platform/Ameba/AmebaConfig.h>
+#include <platform/Beken/AmebaConfig.h>
 #include <platform/ConfigurationManager.h>
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/internal/GenericConfigurationManagerImpl.cpp>
@@ -35,7 +35,7 @@
 namespace chip {
 namespace DeviceLayer {
 
-using namespace ::chip::DeviceLayer::Internal;
+using namespace chip::DeviceLayer::Internal;
 
 ConfigurationManagerImpl & ConfigurationManagerImpl::GetDefaultInstance()
 {

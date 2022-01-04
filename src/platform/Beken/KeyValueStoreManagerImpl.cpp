@@ -23,7 +23,10 @@
 /* this file behaves like a config.h, comes first */
 //#include "chip_porting.h"
 #include <platform/KeyValueStoreManager.h>
+//#include <platform/Beken/AmebaConfig.h>
 #include <support/CodeUtils.h>
+#include "error.h"
+#include "flash_namespace_value.h"
 
 namespace chip {
 namespace DeviceLayer {
@@ -65,6 +68,37 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         err = CHIP_ERROR_INTERNAL;
     }
 #endif
+
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    int32_t ret    = -1;
+
+    if ((!value) || (!read_bytes_size))
+    {
+        return (err = CHIP_ERROR_INVALID_ARGUMENT);
+    }
+
+    if (offset_bytes > 0)
+    {
+        // Offset and partial reads are not supported in nvs, for now just return NOT_IMPLEMENTED. Support can be added in the
+        // future if this is needed.
+        return (err = CHIP_ERROR_NOT_IMPLEMENTED);
+    }
+
+     ret = bk_read_data( key,key,(char *) value,value_size,(uint32_t *)read_bytes_size);
+
+    if (ret == kNoErr)
+    {
+        err = CHIP_NO_ERROR;
+        if (read_bytes_size)
+        {
+            *read_bytes_size = value_size;
+        }
+    }
+    else
+    {
+        err = CHIP_ERROR_INTERNAL;
+    }
+
     return CHIP_NO_ERROR;
 }
 
@@ -86,6 +120,25 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
     else
         err = CHIP_ERROR_INTERNAL;
 #endif
+
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    uint32_t ret    = 0;
+
+    if (!value)
+    {
+        return (err = CHIP_ERROR_INVALID_ARGUMENT);
+    }
+    
+    ret = bk_write_data( key,key, (char *)value,value_size);
+    if (ret == kNoErr)
+    {
+        err = CHIP_NO_ERROR;
+    }
+    else
+    {
+        err = CHIP_ERROR_INTERNAL;
+    }
+
     return CHIP_NO_ERROR;
 }
 
@@ -98,8 +151,27 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
         err = CHIP_NO_ERROR;
     else
         err = CHIP_ERROR_INTERNAL;
-#endif
     return CHIP_NO_ERROR;
+#endif
+
+#if 1
+    uint32_t ret    = 0;
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    
+    ret = bk_clean_data ( key,key);
+    
+    if (kNoErr == ret)
+    {
+        err = CHIP_NO_ERROR;
+    }
+    else
+    {
+        err = CHIP_ERROR_INTERNAL;
+    }
+
+    return err;
+#endif
+
 }
 
 } // namespace PersistedStorage

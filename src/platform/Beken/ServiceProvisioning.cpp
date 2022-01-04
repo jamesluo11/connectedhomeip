@@ -33,11 +33,11 @@ CHIP_ERROR SetWiFiStationProvisioning(const char * ssid, const char * key)
 {
 	network_InitTypeDef_st network_cfg;
 
-	os_memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
+	memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
 
 	network_cfg.wifi_mode = BK_STATION;
-	os_strcpy(network_cfg.wifi_ssid, ssid);
-	os_strcpy(network_cfg.wifi_key, key);
+	strcpy(network_cfg.wifi_ssid, ssid);
+	strcpy(network_cfg.wifi_key, key);
 	network_cfg.dhcp_mode = DHCP_CLIENT;
 
 	bk_wlan_start(&network_cfg);
