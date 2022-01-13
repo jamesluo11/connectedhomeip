@@ -51,6 +51,7 @@ constexpr uint32_t kIdentifyTimerDelayMS = 250;
 
 void DeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, intptr_t arg)
 {
+    ChipLogProgress(DeviceLayer, "DeviceEventCallback, event->Type:%d \r\n", event->Type);
     switch (event->Type)
     {
     case DeviceEventType::kInternetConnectivityChange:
@@ -70,6 +71,15 @@ void DeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, intptr_
             // newly selected address.
             chip::app::DnssdServer::Instance().StartServer();
         }
+        break;
+    case DeviceEventType::kCHIPoBLEConnectionEstablished:
+        ChipLogProgress(Zcl, "CHIPoBLE connection established");
+        break;
+    case DeviceEventType::kCHIPoBLEConnectionClosed:
+        ChipLogProgress(Zcl, "CHIPoBLE disconnected");
+        break;
+    case DeviceEventType::kCommissioningComplete:
+        ChipLogProgress(Zcl, "Commissioning complete");
         break;
     }
 }

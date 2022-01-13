@@ -78,9 +78,9 @@ const ChipBleUUID ChipUUID_CHIPoBLEChar_TX = { { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0
 static const uint8_t _svc_uuid[16] = {0xF6,0xFF,0,0,0x0,0x0,0,0,0,0,0x0,0x0,0,0,0,0};
 
 #define UUID_CHIPoBLECharact_RX   { 0x11, 0x9D, 0x9F, 0x42, 0x9C, 0x4F, 0x9F, 0x95, 0x59, 0x45, 0x3D, 0x26, 0xF5, 0x2E, 0xEE, 0x18 }
-//#define UUID_CHIPoBLEChar_RX   { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F, 0x9D, 0x11 }
+//#define UUID_CHIPoBLECharact_RX   { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F, 0x9D, 0x11 }
 #define ChipUUID_CHIPoBLECharact_TX   { 0x12, 0x9D, 0x9F, 0x42, 0x9C, 0x4F, 0x9F, 0x95, 0x59, 0x45, 0x3D, 0x26, 0xF5, 0x2E, 0xEE, 0x18 }
-///#define ChipUUID_CHIPoBLEChar_TX   { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F, 0x9D, 0x12 }
+//#define ChipUUID_CHIPoBLECharact_TX   { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F, 0x9D, 0x12 }
 
 #define BEKEN_ATT_DECL_PRIMARY_SERVICE_128     {0x00,0x28,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #define BEKEN_ATT_DECL_CHARACTERISTIC_128      {0x03,0x28,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
@@ -110,9 +110,10 @@ bk_attm_desc_t svr_fff6_att_db[SVR_FFF6_MAX] =
     ///RD_POS  NTF_POS
     [SVR_FFF6_TX_DECL]    = {BEKEN_ATT_DECL_CHARACTERISTIC_128,  BK_PERM_SET(RD, ENABLE) | BK_PERM_SET(NTF, ENABLE), 0, 0},
     ////  UUID_LEN_POS   BK_PERM_RIGHT_UUID_128 RD_POS
-    [SVR_FFF6_TX_VALUE]   = {ChipUUID_CHIPoBLECharact_TX,     BK_PERM_SET(RD, ENABLE), BK_PERM_SET(RI, ENABLE)|BK_PERM_SET(UUID_LEN, UUID_128), 512},
-    [SVR_FFF6_TX_CFG]    = {BEKEN_ATT_DESC_CLIENT_CHAR_CFG_128, BK_PERM_SET(RD, ENABLE)|BK_PERM_SET(WRITE_REQ, ENABLE), 0, 2},
+    [SVR_FFF6_TX_VALUE]   = {ChipUUID_CHIPoBLECharact_TX,     BK_PERM_SET(RD, ENABLE) | BK_PERM_SET(NTF, ENABLE), BK_PERM_SET(RI, ENABLE) | BK_PERM_SET(UUID_LEN, UUID_128), 512},
+    [SVR_FFF6_TX_CFG]    = {BEKEN_ATT_DESC_CLIENT_CHAR_CFG_128, BK_PERM_SET(RD, ENABLE) | BK_PERM_SET(WRITE_REQ, ENABLE), 0, 2},
 };
+
 
 ///const static uint8_t svr_fff6_att_db_item = SVR_FFF6_MAX;
 } // namespace
@@ -178,9 +179,9 @@ exit:
 
 void BLEManagerImpl::HandleTXCharRead(void* param)
 {
-	CHIPoBLEConState * conState;
+    CHIPoBLEConState * conState;
     read_req_t *r_req = (read_req_t *)param;
-	if(param == NULL){
+    if(param == NULL){
         ChipLogError(DeviceLayer, "HandleTXCharRead failed: %p",param);
     }
     r_req->length = 0;
@@ -195,7 +196,7 @@ void BLEManagerImpl::HandleTXCharCCCDRead(void * param)
     if(param == NULL) {
         ChipLogError(DeviceLayer, "HandleTXCharCCCDRead failed");
         return;
-	}
+    }
 
     if (conState != NULL) {
         r_req->value[0] = conState->subscribed ? 1 : 0;
@@ -1062,6 +1063,10 @@ void BLEManagerImpl::ble_event_notice(ble_notice_t notice, void *param)
             int notificationsEnabled = w_req->value[0] | (w_req->value[0] << 8);
             sInstance.HandleTXCharCCCDWrite(w_req->conn_idx, notificationsEnabled);
         }
+        else if (w_req->att_idx == SVR_FFF6_RX_VALUE)
+        {
+            sInstance.HandleRXCharWrite((uint8_t*)&w_req->value[0],w_req->len,w_req->conn_idx);
+        }
         break;
 	}
 	case BLE_5_READ_EVENT:
@@ -1081,13 +1086,14 @@ void BLEManagerImpl::ble_event_notice(ble_notice_t notice, void *param)
     }
     case BLE_5_TX_DONE:
     {
+        ChipLogProgress(DeviceLayer, "BLE_5_TX_DONE");
         tx_done_rsp_t* txd_rsp = (tx_done_rsp_t*)param;
-        if(txd_rsp && txd_rsp->is_indicate){
+        if(txd_rsp) {
             CHIPoBLEConState * conState = sInstance.GetConnectionState(txd_rsp->conn_idx,false);
             if (conState != NULL)
-	        {
-                sInstance.HandleTXCharConfirm(conState, (!txd_rsp->status) ? 0 : 1);
-	        }
+            {
+                sInstance.HandleTXCharConfirm(conState, txd_rsp->status);
+            }
         }
     }
     break;
@@ -1125,7 +1131,7 @@ void BLEManagerImpl::ble_event_notice(ble_notice_t notice, void *param)
         sInstance.HandleGAPDisconnect(d_ind->conn_idx,d_ind->reason);
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
         break;
-	}
+    }
     case BLE_5_ATT_INFO_REQ:
     {
         att_info_req_t *a_ind = (att_info_req_t *)param;

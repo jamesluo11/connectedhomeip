@@ -70,13 +70,12 @@ void GetGatewayIP(char * ip_buf, size_t ip_len)
 // need to check CONFIG_RENDEZVOUS_MODE
 bool isRendezvousBLE()
 {
-    //RendezvousInformationFlags flags = RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE);
-    //return flags.Has(RendezvousInformationFlag::kBLE);
+    RendezvousInformationFlags flags = RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE);
+    return flags.Has(RendezvousInformationFlag::kBLE);
 }
 
 std::string createSetupPayload()
 {
-#if 0
     CHIP_ERROR err = CHIP_NO_ERROR;
     std::string result;
 
@@ -84,25 +83,25 @@ std::string createSetupPayload()
     err = ConfigurationMgr().GetSetupDiscriminator(discriminator);
     if (err != CHIP_NO_ERROR)
     {
-        ChipLogProgress("Couldn't get discriminator: %s\r\n", ErrorStr(err));
+        ChipLogProgress(Zcl, "Couldn't get discriminator: %s\r\n", ErrorStr(err));
         return result;
     }
-    ChipLogProgress("Setup discriminator: %u (0x%x)\r\n", discriminator, discriminator);
+    ChipLogProgress(Zcl, "Setup discriminator: %u (0x%x)\r\n", discriminator, discriminator);
 
     uint32_t setupPINCode;
     err = ConfigurationMgr().GetSetupPinCode(setupPINCode);
     if (err != CHIP_NO_ERROR)
     {
-        ChipLogProgress("Couldn't get setupPINCode: %s\r\n", ErrorStr(err));
+        ChipLogProgress(Zcl, "Couldn't get setupPINCode: %s\r\n", ErrorStr(err));
         return result;
     }
-    ChipLogProgress("Setup PIN code: %u (0x%x)\r\n", setupPINCode, setupPINCode);
+    ChipLogProgress(Zcl, "Setup PIN code: %u (0x%x)\r\n", setupPINCode, setupPINCode);
 
     uint16_t vendorId;
     err = ConfigurationMgr().GetVendorId(vendorId);
     if (err != CHIP_NO_ERROR)
     {
-        ChipLogProgress("Couldn't get vendorId: %s\r\n", ErrorStr(err));
+        ChipLogProgress(Zcl, "Couldn't get vendorId: %s\r\n", ErrorStr(err));
         return result;
     }
 
@@ -110,10 +109,11 @@ std::string createSetupPayload()
     err = ConfigurationMgr().GetProductId(productId);
     if (err != CHIP_NO_ERROR)
     {
-        ChipLogProgress("Couldn't get productId: %s\r\n", ErrorStr(err));
+        ChipLogProgress(Zcl, "Couldn't get productId: %s\r\n", ErrorStr(err));
         return result;
     }
-
+    ChipLogProgress(Zcl, "Setup VendorId: %u (0x%x)\r\n", vendorId, vendorId);
+    ChipLogProgress(Zcl, "Setup ProductId: %u (0x%x)\r\n", productId, productId);
     SetupPayload payload;
     payload.version               = 0;
     payload.discriminator         = discriminator;
@@ -146,11 +146,11 @@ std::string createSetupPayload()
 
         if (generator.payloadDecimalStringRepresentation(outCode) == CHIP_NO_ERROR)
         {
-            ChipLogProgress("Short Manual(decimal) setup code: %s\r\n", outCode.c_str());
+            ChipLogProgress(Zcl, "Short Manual(decimal) setup code: %s\r\n", outCode.c_str());
         }
         else
         {
-            ChipLogProgress("Failed to get decimal setup code\r\n");
+            ChipLogProgress(Zcl, "Failed to get decimal setup code\r\n");
         }
 
         payload.commissioningFlow = CommissioningFlow::kCustom;
@@ -159,20 +159,19 @@ std::string createSetupPayload()
         if (generator.payloadDecimalStringRepresentation(outCode) == CHIP_NO_ERROR)
         {
             // intentional extra space here to align the log with the short code
-            ChipLogProgress("Long Manual(decimal) setup code:  %s\r\n", outCode.c_str());
+            ChipLogProgress(Zcl, "Long Manual(decimal) setup code:  %s\r\n", outCode.c_str());
         }
         else
         {
-            ChipLogProgress("Failed to get decimal setup code\r\n");
+            ChipLogProgress(Zcl, "Failed to get decimal setup code\r\n");
         }
     }
 
     if (err != CHIP_NO_ERROR)
     {
-        ChipLogProgress("Couldn't get payload string %\r\n" CHIP_ERROR_FORMAT, err.Format());
+        ChipLogProgress(Zcl, "Couldn't get payload string %\r\n" CHIP_ERROR_FORMAT, err.Format());
     }
-#endif
-    return "ff";
+    return result;
 };
 
 void OnIdentifyStart(Identify *)
@@ -300,7 +299,7 @@ extern "C" void ChipTest(void)
     chip::Server::GetInstance().Init();
     // Initialize device attestation config
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
-#if 0
+
     std::string qrCodeText = createSetupPayload();
 
     ChipLogProgress(Zcl, "QR CODE Text: '%s'\r\n", qrCodeText.c_str());
@@ -310,13 +309,10 @@ extern "C" void ChipTest(void)
         err = EncodeQRCodeToUrl(qrCodeText.c_str(), qrCodeText.size(), qrCode.data(), qrCode.max_size());
         if (err == CHIP_NO_ERROR)
         {
-            ChipLogProgress(Zcl, "Copy/paste the below URL in a browser to see the QR CODE:\n\t%s?data=%s", QRCODE_BASE_URL, qrCode.data());
+            ChipLogProgress(DeviceLayer, "Copy/paste the below URL in a browser to see the QR CODE:\t");
+            ChipLogProgress(DeviceLayer, "%s?data=%s \r\n",QRCODE_BASE_URL, qrCode.data());
         }
     }
-    ChipLogProgress(Zcl, "\n\n");
-
-    //statusLED1.Init(STATUS_LED_GPIO_NUM);
-#endif
     while (true)
         vTaskDelay(pdMS_TO_TICKS(50));
 }
