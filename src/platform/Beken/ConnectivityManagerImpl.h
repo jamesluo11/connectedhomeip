@@ -73,7 +73,6 @@ class ConnectivityManagerImpl final : public ConnectivityManager,
     // Allow the ConnectivityManager interface class to delegate method calls to
     // the implementation methods provided by this class.
     friend class ConnectivityManager;
-
 private:
     CHIP_ERROR _Init(void);
     void _OnPlatformEvent(const ChipDeviceEvent * event);
@@ -141,10 +140,9 @@ private:
     friend ConnectivityManagerImpl & ConnectivityMgrImpl(void);
 
     static ConnectivityManagerImpl sInstance;
-    static void RefreshMessageLayer(void);
-    static void RtkWiFiStationConnectedHandler(char * buf, int buf_len, int flags, void * userdata);
-    void DHCPProcess(void);
-    static void DHCPProcessThread(void * param);
+    static void WiFiStationConnectedHandler();
+    static void wlan_status_cb(void *ctxt);
+    void IpConnectedEventNotify(void);
 };
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI

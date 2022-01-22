@@ -41,8 +41,7 @@
 #include <lwip/nd6.h>
 #include <lwip/netif.h>
 
-//#include <chip_porting.h>
-//#include <lwip_netconf.h>
+#include "wlan_ui_pub.h"
 
 using namespace ::chip;
 using namespace ::chip::Inet;
@@ -142,7 +141,6 @@ void ConnectivityManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
             ChangeWiFiStationState(kWiFiStationState_Connecting_Succeeded);
         }
         DriveStationState();
-        DHCPProcess();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_WIFI
 }
@@ -156,7 +154,8 @@ ConnectivityManager::WiFiStationMode ConnectivityManagerImpl::_GetWiFiStationMod
         mWiFiStationMode = (wifi_mode == RTW_MODE_STA) ? kWiFiStationMode_Enabled : kWiFiStationMode_Disabled;
     }
 #endif
-    return kWiFiStationMode_Disabled;
+    //TODO should enabled
+    return kWiFiStationMode_Enabled;
 }
 
 bool ConnectivityManagerImpl::_IsWiFiStationEnabled(void)
@@ -170,6 +169,12 @@ CHIP_ERROR ConnectivityManagerImpl::_SetWiFiStationMode(WiFiStationMode val)
 
     VerifyOrExit(val != kWiFiStationMode_NotSupported, err = CHIP_ERROR_INVALID_ARGUMENT);
 
+    if(mWiFiStationMode == kWiFiStationMode_Disabled && val == kWiFiStationMode_Enabled)
+    {
+        bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
+        ChangeWiFiStationState(kWiFiStationState_Connecting);
+    }
+
     if (val != kWiFiStationMode_ApplicationControlled)
     {
         DeviceLayer::SystemLayer().ScheduleWork(DriveStationState, NULL);
@@ -177,7 +182,8 @@ CHIP_ERROR ConnectivityManagerImpl::_SetWiFiStationMode(WiFiStationMode val)
 
     if (mWiFiStationMode != val)
     {
-        ChipLogProgress(DeviceLayer, "WiFi station mode change: %d -> %d", (mWiFiStationMode), (val));
+        ChipLogProgress(DeviceLayer, "WiFi station mode change: %s -> %s", WiFiStationModeToStr(mWiFiStationMode),
+                        WiFiStationModeToStr(val));
     }
 
     mWiFiStationMode = val;
@@ -188,12 +194,16 @@ exit:
 
 bool ConnectivityManagerImpl::_IsWiFiStationProvisioned(void)
 {
-#if 0
-    rtw_wifi_setting_t mWiFiSetting;
-    CHIP_GetWiFiConfig(&mWiFiSetting);
-    return mWiFiSetting.ssid[0] != 0;
-#endif
-	return false;
+    wlan_sta_config_t config;
+
+    memset(&config, 0, sizeof(config));
+    config.field = WLAN_STA_FIELD_SSID;
+    if(0 != wlan_sta_get_config(&config))
+    {
+        ChipLogError(DeviceLayer, "wlan_sta_get_config failed!");
+        return false;
+    }
+    return (config.u.ssid.ssid[0] != 0) ? true : false;
 }
 
 void ConnectivityManagerImpl::_ClearWiFiStationProvision(void)
@@ -255,180 +265,6 @@ void ConnectivityManagerImpl::_SetWiFiAPIdleTimeout(System::Clock::Timeout val)
     DeviceLayer::SystemLayer().ScheduleWork(DriveAPState, NULL);
 }
 
-#define WIFI_BAND_2_4GHZ 2400
-#define WIFI_BAND_5_0GHZ 5000
-
-static uint16_t Map2400MHz(const uint8_t inChannel)
-{
-    uint16_t frequency = 0;
-
-    if (inChannel >= 1 && inChannel <= 13)
-    {
-        // Cast is OK because we definitely fit in 16 bits.
-        frequency = static_cast<uint16_t>(2412 + ((inChannel - 1) * 5));
-    }
-    else if (inChannel == 14)
-    {
-        frequency = 2484;
-    }
-
-    return frequency;
-}
-
-static uint16_t Map5000MHz(const uint8_t inChannel)
-{
-    uint16_t frequency = 0;
-
-    switch (inChannel)
-    {
-
-    case 183:
-        frequency = 4915;
-        break;
-    case 184:
-        frequency = 4920;
-        break;
-    case 185:
-        frequency = 4925;
-        break;
-    case 187:
-        frequency = 4935;
-        break;
-    case 188:
-        frequency = 4940;
-        break;
-    case 189:
-        frequency = 4945;
-        break;
-    case 192:
-        frequency = 4960;
-        break;
-    case 196:
-        frequency = 4980;
-        break;
-    case 7:
-        frequency = 5035;
-        break;
-    case 8:
-        frequency = 5040;
-        break;
-    case 9:
-        frequency = 5045;
-        break;
-    case 11:
-        frequency = 5055;
-        break;
-    case 12:
-        frequency = 5060;
-        break;
-    case 16:
-        frequency = 5080;
-        break;
-    case 34:
-        frequency = 5170;
-        break;
-    case 36:
-        frequency = 5180;
-        break;
-    case 38:
-        frequency = 5190;
-        break;
-    case 40:
-        frequency = 5200;
-        break;
-    case 42:
-        frequency = 5210;
-        break;
-    case 44:
-        frequency = 5220;
-        break;
-    case 46:
-        frequency = 5230;
-        break;
-    case 48:
-        frequency = 5240;
-        break;
-    case 52:
-        frequency = 5260;
-        break;
-    case 56:
-        frequency = 5280;
-        break;
-    case 60:
-        frequency = 5300;
-        break;
-    case 64:
-        frequency = 5320;
-        break;
-    case 100:
-        frequency = 5500;
-        break;
-    case 104:
-        frequency = 5520;
-        break;
-    case 108:
-        frequency = 5540;
-        break;
-    case 112:
-        frequency = 5560;
-        break;
-    case 116:
-        frequency = 5580;
-        break;
-    case 120:
-        frequency = 5600;
-        break;
-    case 124:
-        frequency = 5620;
-        break;
-    case 128:
-        frequency = 5640;
-        break;
-    case 132:
-        frequency = 5660;
-        break;
-    case 136:
-        frequency = 5680;
-        break;
-    case 140:
-        frequency = 5700;
-        break;
-    case 149:
-        frequency = 5745;
-        break;
-    case 153:
-        frequency = 5765;
-        break;
-    case 157:
-        frequency = 5785;
-        break;
-    case 161:
-        frequency = 5805;
-        break;
-    case 165:
-        frequency = 5825;
-        break;
-    }
-
-    return frequency;
-}
-
-static uint16_t MapFrequency(const uint16_t inBand, const uint8_t inChannel)
-{
-    uint16_t frequency = 0;
-
-    if (inBand == WIFI_BAND_2_4GHZ)
-    {
-        frequency = Map2400MHz(inChannel);
-    }
-    else if (inBand == WIFI_BAND_5_0GHZ)
-    {
-        frequency = Map5000MHz(inChannel);
-    }
-
-    return frequency;
-}
-
 CHIP_ERROR ConnectivityManagerImpl::_GetAndLogWifiStatsCounters(void)
 {
     return CHIP_NO_ERROR;
@@ -448,28 +284,67 @@ void ConnectivityManagerImpl::_OnWiFiStationProvisionChange()
 }
 
 // ==================== ConnectivityManager Private Methods ====================
+void ConnectivityManagerImpl::WiFiStationConnectedHandler()
+{
+    ChipDeviceEvent event;
+    memset(&event, 0, sizeof(event));
+    event.Type = DeviceEventType::kRtkWiFiStationConnectedEvent;
+    PlatformMgr().PostEventOrDie(&event);
+}
+
+static bool stationConnected = false;
+void ConnectivityManagerImpl::wlan_status_cb(void *ctxt)
+{
+    int notice_event = *(unsigned int*)ctxt;
+
+    switch(notice_event){
+    case RW_EVT_STA_GOT_IP:
+        stationConnected = true;
+        WiFiStationConnectedHandler();
+        ChipLogProgress(DeviceLayer, "RW_EVT_STA_GOT_IP");
+        break;
+    case RW_EVT_STA_CONNECTED:
+        ChipLogProgress(DeviceLayer, "RW_EVT_STA_CONNECTED");
+        break;
+    case RW_EVT_STA_DISCONNECTED:
+        stationConnected = false;
+        ChipLogProgress(DeviceLayer, "RW_EVT_STA_DISCONNECTED");
+        break;
+    default:
+        ChipLogProgress(DeviceLayer, "unSupported wifi status:%d", notice_event);
+        break;
+    }
+}
 
 void ConnectivityManagerImpl::DriveStationState()
 {
-#if 0
-    bool stationConnected;
-
+    int ret;
+    
     GetWiFiStationMode();
 
     // If the station interface is NOT under application control...
     if (mWiFiStationMode != kWiFiStationMode_ApplicationControlled)
     {
         // Ensure that the WiFi layer is started.
-        wifi_on(RTW_MODE_STA);
+        //wifi_on(RTW_MODE_STA);
 
         // Ensure that station mode is enabled in the WiFi layer.
-        wifi_set_mode(RTW_MODE_STA);
+        //wifi_set_mode(RTW_MODE_STA);
         ;
+    }
+#if 0
+    wlan_sta_states_t state;
+    ret = wlan_sta_state(&state);
+    if(ret != 0)
+    {
+        ChipLogError(DeviceLayer, "Get wlan sta state faield!");
+        return;
     }
 
     // Determine if the WiFi layer thinks the station interface is currently connected.
-    stationConnected = (wifi_is_connected_to_ap() == RTW_SUCCESS) ? 1 : 0;
-
+    stationConnected = (state == WLAN_STA_STATE_CONNECTED) ? true : false;
+#endif
+    ChipLogProgress(DeviceLayer, "wifi station state:%d, mWiFiStationState:%d", stationConnected, mWiFiStationState);
     // If the station interface is currently connected ...
     if (stationConnected)
     {
@@ -481,6 +356,7 @@ void ConnectivityManagerImpl::DriveStationState()
             ChipLogProgress(DeviceLayer, "WiFi station interface connected");
             mLastStationConnectFailTime = System::Clock::kZero;
             OnStationConnected();
+            IpConnectedEventNotify();
         }
 
         // If the WiFi station interface is no longer enabled, or no longer provisioned,
@@ -490,10 +366,9 @@ void ConnectivityManagerImpl::DriveStationState()
             (mWiFiStationMode != kWiFiStationMode_Enabled || !IsWiFiStationProvisioned()))
         {
             ChipLogProgress(DeviceLayer, "Disconnecting WiFi station interface");
-            int err = wifi_disconnect();
-            if (err != 0)
+            if(0 != wlan_sta_disconnect())
             {
-                ChipLogError(DeviceLayer, "wifi_disconnect() failed: %s", err);
+                ChipLogError(DeviceLayer, "wifi_disconnect() failed!");
                 return;
             }
 
@@ -527,7 +402,9 @@ void ConnectivityManagerImpl::DriveStationState()
         // If the WiFi station interface is now enabled and provisioned (and by implication,
         // not presently under application control), AND the system is not in the process of
         // scanning, then...
-        if (mWiFiStationMode == kWiFiStationMode_Enabled && IsWiFiStationProvisioned())
+        ChipLogProgress(DeviceLayer, "mWiFiStationMode:%d, IsWiFiStationProvisioned:%d", mWiFiStationMode, IsWiFiStationProvisioned());
+        if (mWiFiStationMode == kWiFiStationMode_Enabled && IsWiFiStationProvisioned() &&
+            mWiFiStationState != kWiFiStationState_Connecting)
         {
             // Initiate a connection to the AP if we haven't done so before, or if enough
             // time has passed since the last attempt.
@@ -535,11 +412,12 @@ void ConnectivityManagerImpl::DriveStationState()
                 now >= mLastStationConnectFailTime + mWiFiStationReconnectInterval)
             {
                 ChipLogProgress(DeviceLayer, "Attempting to connect WiFi station interface");
-                rtw_wifi_setting_t wifi_info;
-                CHIP_GetWiFiConfig(&wifi_info);
-                wifi_reg_event_handler(WIFI_EVENT_CONNECT, ConnectivityManagerImpl::RtkWiFiStationConnectedHandler, NULL);
-                wifi_connect((char *) wifi_info.ssid, RTW_SECURITY_WPA_WPA2_MIXED, (char *) wifi_info.password,
-                             strlen((const char *) wifi_info.ssid), strlen((const char *) wifi_info.password), 0, NULL);
+                bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
+                if(0 != wlan_sta_connect(0))//assume not support fast connect
+                {
+                    ChipLogError(DeviceLayer, "wlan_sta_connect() failed!");
+                    return;
+                }
                 ChangeWiFiStationState(kWiFiStationState_Connecting);
             }
 
@@ -555,7 +433,6 @@ void ConnectivityManagerImpl::DriveStationState()
             }
         }
     }
-#endif
     ChipLogProgress(DeviceLayer, "Done driving station state, nothing else to do...");
     // Kick-off any pending network scan that might have been deferred due to the activity
     // of the WiFi station.
@@ -587,7 +464,8 @@ void ConnectivityManagerImpl::ChangeWiFiStationState(WiFiStationState newState)
 {
     if (mWiFiStationState != newState)
     {
-        ChipLogProgress(DeviceLayer, "WiFi station state change: %d -> %d", (mWiFiStationState), (newState));
+        ChipLogProgress(DeviceLayer, "WiFi station state change: %s -> %s", WiFiStationStateToStr(mWiFiStationState),
+                        WiFiStationStateToStr(newState));
         mWiFiStationState = newState;
     }
 }
@@ -599,6 +477,7 @@ void ConnectivityManagerImpl::DriveStationState(::chip::System::Layer * aLayer, 
 
 void ConnectivityManagerImpl::DriveAPState()
 {
+    ChipLogProgress(DeviceLayer, "WiFi ConnectivityManagerImpl::DriveAPState, do nothing!");
     CHIP_ERROR err = CHIP_NO_ERROR;
 }
 
@@ -623,7 +502,6 @@ void ConnectivityManagerImpl::DriveAPState(::chip::System::Layer * aLayer, void 
 
 void ConnectivityManagerImpl::UpdateInternetConnectivityState(void)
 {
-#if 0
     bool haveIPv4Conn      = false;
     bool haveIPv6Conn      = false;
     const bool hadIPv4Conn = mFlags.Has(ConnectivityFlags::kHaveIPv4InternetConnectivity);
@@ -634,7 +512,7 @@ void ConnectivityManagerImpl::UpdateInternetConnectivityState(void)
     if (mWiFiStationState == kWiFiStationState_Connected)
     {
         // Get the LwIP netif for the WiFi station interface.
-        struct netif * netif = &xnetif[0];
+        struct netif * netif = netif_list;
 
         // If the WiFi station interface is up...
         if (netif != NULL && netif_is_up(netif) && netif_is_link_up(netif))
@@ -649,9 +527,9 @@ void ConnectivityManagerImpl::UpdateInternetConnectivityState(void)
                 if (!ip4_addr_isany_val(*netif_ip4_addr(netif)) && !ip4_addr_isany_val(*netif_ip4_gw(netif)))
                 {
                     haveIPv4Conn = true;
-                    char addrStr[INET_ADDRSTRLEN];
-                    ip4addr_ntoa_r((const ip4_addr_t *) LwIP_GetIP(&xnetif[0]), addrStr, sizeof(addrStr));
-                    IPAddress::FromString(addrStr, addr);
+                    //char addrStr[INET_ADDRSTRLEN];
+                    //ip4addr_ntoa_r((const ip4_addr_t *) LwIP_GetIP(&xnetif[0]), addrStr, sizeof(addrStr));
+                    //IPAddress::FromString(addrStr, addr);
                 }
 
                 // Search among the IPv6 addresses assigned to the interface for a Global Unicast
@@ -686,7 +564,7 @@ void ConnectivityManagerImpl::UpdateInternetConnectivityState(void)
         event.Type                            = DeviceEventType::kInternetConnectivityChange;
         event.InternetConnectivityChange.IPv4 = GetConnectivityChange(hadIPv4Conn, haveIPv4Conn);
         event.InternetConnectivityChange.IPv6 = GetConnectivityChange(hadIPv6Conn, haveIPv6Conn);
-        addr.ToString(event.InternetConnectivityChange.address);
+        //addr.ToString(event.InternetConnectivityChange.address);
         PlatformMgr().PostEventOrDie(&event);
 
         if (haveIPv4Conn != hadIPv4Conn)
@@ -699,7 +577,6 @@ void ConnectivityManagerImpl::UpdateInternetConnectivityState(void)
             ChipLogProgress(DeviceLayer, "%s Internet connectivity %s", "IPv6", (haveIPv6Conn) ? "ESTABLISHED" : "LOST");
         }
     }
-#endif
 }
 
 void ConnectivityManagerImpl::OnStationIPv4AddressAvailable(void)
@@ -715,23 +592,19 @@ void ConnectivityManagerImpl::OnStationIPv4AddressAvailable(void)
         ChipLogProgress(DeviceLayer, "\n\r\tmsk             => %d.%d.%d.%d\n\r", msk[0], msk[1], msk[2], msk[3]);
     }
 #endif // CHIP_PROGRESS_LOGGING
-
-    RefreshMessageLayer();
+#endif
 
     UpdateInternetConnectivityState();
-
+    ChipLogProgress(DeviceLayer, "IPv4 address available on WiFi station interface");
     ChipDeviceEvent event;
     event.Type                           = DeviceEventType::kInterfaceIpAddressChanged;
     event.InterfaceIpAddressChanged.Type = InterfaceIpChangeType::kIpV4_Assigned;
     PlatformMgr().PostEventOrDie(&event);
-#endif
 }
 
 void ConnectivityManagerImpl::OnStationIPv4AddressLost(void)
 {
     ChipLogProgress(DeviceLayer, "IPv4 address lost on WiFi station interface");
-
-    RefreshMessageLayer();
 
     UpdateInternetConnectivityState();
 
@@ -766,50 +639,29 @@ void ConnectivityManagerImpl::OnIPv6AddressAvailable(void)
 #endif
     }
 #endif // CHIP_PROGRESS_LOGGING
-
-    RefreshMessageLayer();
+#endif
 
     UpdateInternetConnectivityState();
-
+    ChipLogProgress(DeviceLayer, "IPv6 address available on WiFi station interface");
     ChipDeviceEvent event;
     event.Type                           = DeviceEventType::kInterfaceIpAddressChanged;
     event.InterfaceIpAddressChanged.Type = InterfaceIpChangeType::kIpV6_Assigned;
     PlatformMgr().PostEventOrDie(&event);
-#endif
 }
 
-void ConnectivityManagerImpl::RefreshMessageLayer(void) {}
-
-void ConnectivityManagerImpl::RtkWiFiStationConnectedHandler(char * buf, int buf_len, int flags, void * userdata)
+void ConnectivityManagerImpl::IpConnectedEventNotify()
 {
-    ChipDeviceEvent event;
-    memset(&event, 0, sizeof(event));
-    event.Type = DeviceEventType::kRtkWiFiStationConnectedEvent;
-    PlatformMgr().PostEventOrDie(&event);
-}
+    const bool hadIPv4Conn = mFlags.Has(ConnectivityFlags::kHaveIPv4InternetConnectivity);
+    const bool hadIPv6Conn = mFlags.Has(ConnectivityFlags::kHaveIPv6InternetConnectivity);
 
-void ConnectivityManagerImpl::DHCPProcessThread(void * param)
-{
-#if 0
-    LwIP_DHCP(0, DHCP_START);
-    PlatformMgr().LockChipStack();
-    sInstance.OnStationIPv4AddressAvailable();
-    PlatformMgr().UnlockChipStack();
-#if LWIP_VERSION_MAJOR >= 2 && LWIP_VERSION_MINOR >= 1
-#if LWIP_IPV6
-    LwIP_DHCP6(0, DHCP6_START);
-    PlatformMgr().LockChipStack();
-    sInstance.OnIPv6AddressAvailable();
-    PlatformMgr().UnlockChipStack();
-#endif
-#endif
-    vTaskDelete(NULL);
-#endif
-}
-
-void ConnectivityManagerImpl::DHCPProcess(void)
-{
-    xTaskCreate(DHCPProcessThread, "DHCPProcess", 4096 / sizeof(StackType_t), this, 1, NULL);
+    if(hadIPv4Conn)
+    {
+        sInstance.OnStationIPv4AddressAvailable();
+    }
+    if(hadIPv6Conn)
+    {
+        sInstance.OnIPv6AddressAvailable();
+    }
 }
 
 #endif // CHIP_DEVICE_CONFIG_ENABLE_WIFI

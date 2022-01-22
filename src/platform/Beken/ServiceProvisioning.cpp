@@ -31,16 +31,17 @@ using namespace ::chip::DeviceLayer;
 
 CHIP_ERROR SetWiFiStationProvisioning(const char * ssid, const char * key)
 {
-	network_InitTypeDef_st network_cfg;
+    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled);
+    network_InitTypeDef_st network_cfg;
 
-	memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
+    memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
 
-	network_cfg.wifi_mode = BK_STATION;
-	strcpy(network_cfg.wifi_ssid, ssid);
-	strcpy(network_cfg.wifi_key, key);
-	network_cfg.dhcp_mode = DHCP_CLIENT;
+    network_cfg.wifi_mode = BK_STATION;
+    strcpy(network_cfg.wifi_ssid, ssid);
+    strcpy(network_cfg.wifi_key, key);
+    network_cfg.dhcp_mode = DHCP_CLIENT;
+    bk_wlan_start(&network_cfg);
+    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
 
-	bk_wlan_start(&network_cfg);
-
-	return CHIP_NO_ERROR;
+    return CHIP_NO_ERROR;
 }

@@ -63,6 +63,9 @@ namespace {
 #define CHIP_ADV_DATA_TYPE_FLAGS 0x01
 #define CHIP_ADV_DATA_FLAGS 0x06
 
+/* advertising configuration */
+#define CHIP_ADV_SHORT_UUID_LEN (2)
+
 /* FreeRTOS sw timer */
 TimerHandle_t bleFastAdvTimer;
 
@@ -692,7 +695,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
         advData[index++] = 0x02;        // length
         advData[index++] = CHIP_ADV_DATA_TYPE_FLAGS;     // AD type : flags
         advData[index++] = CHIP_ADV_DATA_FLAGS;     // AD value
-        advData[index++] = 0x0A;   // length
+        advData[index++] = static_cast<uint8_t>(sizeof(deviceIdInfo) + CHIP_ADV_SHORT_UUID_LEN + 1);;   // length
         advData[index++] = 0x16;    // AD type: (Service Data - 16-bit UUID)
         advData[index++] = static_cast<uint8_t>(_svc_uuid[0] & 0xFF);    // AD value
         advData[index++] = static_cast<uint8_t>(_svc_uuid[1] & 0xFF);    // AD value

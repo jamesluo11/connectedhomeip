@@ -51,7 +51,7 @@ constexpr uint32_t kIdentifyTimerDelayMS = 250;
 
 void DeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, intptr_t arg)
 {
-    ChipLogProgress(DeviceLayer, "DeviceEventCallback, event->Type:%d \r\n", event->Type);
+    ChipLogProgress(Zcl, "DeviceEventCallback, event->Type:%d \r\n", event->Type);
     switch (event->Type)
     {
     case DeviceEventType::kInternetConnectivityChange:
@@ -62,6 +62,7 @@ void DeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, intptr_
         OnSessionEstablished(event);
         break;
     case DeviceEventType::kInterfaceIpAddressChanged:
+        ChipLogProgress(Zcl, "IP(%s) changed event", (event->InterfaceIpAddressChanged.Type == InterfaceIpChangeType::kIpV4_Assigned)? "IPv4": "IPv6");
         if ((event->InterfaceIpAddressChanged.Type == InterfaceIpChangeType::kIpV4_Assigned) ||
             (event->InterfaceIpAddressChanged.Type == InterfaceIpChangeType::kIpV6_Assigned))
         {
@@ -88,21 +89,21 @@ void DeviceCallbacks::OnInternetConnectivityChange(const ChipDeviceEvent * event
 {
     if (event->InternetConnectivityChange.IPv4 == kConnectivity_Established)
     {
-        printf("Server ready at: %s:%d", event->InternetConnectivityChange.address, CHIP_PORT);
-        chip::app::DnssdServer::Instance().StartServer();
+        ChipLogProgress(Zcl, "Server ready at:%d", CHIP_PORT);
+        //chip::app::DnssdServer::Instance().StartServer();
     }
     else if (event->InternetConnectivityChange.IPv4 == kConnectivity_Lost)
     {
-        printf("Lost IPv4 connectivity...");
+        ChipLogProgress(Zcl, "Lost IPv4 connectivity...");
     }
     if (event->InternetConnectivityChange.IPv6 == kConnectivity_Established)
     {
-        printf("IPv6 Server ready...");
+        ChipLogProgress(Zcl, "IPv6 Server ready...");
         chip::app::DnssdServer::Instance().StartServer();
     }
     else if (event->InternetConnectivityChange.IPv6 == kConnectivity_Lost)
     {
-        printf("Lost IPv6 connectivity...");
+        ChipLogProgress(Zcl, "Lost IPv6 connectivity...");
     }
 }
 
@@ -110,7 +111,7 @@ void DeviceCallbacks::OnSessionEstablished(const ChipDeviceEvent * event)
 {
     if (event->SessionEstablished.IsCommissioner)
     {
-        printf("Commissioner detected!");
+        ChipLogProgress(Zcl, "Commissioner detected!");
     }
 }
 

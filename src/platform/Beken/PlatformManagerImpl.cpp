@@ -36,23 +36,9 @@ CHIP_ERROR InitLwIPCoreLock(void);
 }
 
 PlatformManagerImpl PlatformManagerImpl::sInstance;
-#if 0
-extern "C" {
-extern int rtw_get_random_bytes(void * dst, size_t size);
-}
-static int app_entropy_source(void * data, unsigned char * output, size_t len, size_t * olen)
-{
-    *olen = 0;
 
-    if (len == 0)
-        return (0);
+extern "C" int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen);
 
-    rtw_get_random_bytes(output, len);
-    *olen = len;
-
-    return 0;
-}
-#endif
 CHIP_ERROR PlatformManagerImpl::_InitChipStack(void)
 {
 
@@ -70,8 +56,7 @@ CHIP_ERROR PlatformManagerImpl::_InitChipStack(void)
 
     // TODO Wi-Fi Initialzation currently done through the example app needs to be moved into here.
     // for now we will let this happen that way and assume all is OK
-	//TODO beken
-    //chip::Crypto::add_entropy_source(app_entropy_source, NULL, 1);
+    chip::Crypto::add_entropy_source(mbedtls_hardware_poll, NULL, 32);
 
     // Call _InitChipStack() on the generic implementation base class
     // to finish the initialization process.
