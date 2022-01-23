@@ -19,7 +19,7 @@
 /**
  *    @file
  *          Provides an implementation of the PlatformManager object
- *          for the Ameba platform.
+ *          for the Beken platform.
  */
 
 #pragma once
@@ -30,7 +30,7 @@ namespace chip {
 namespace DeviceLayer {
 
 /**
- * Concrete implementation of the PlatformManager singleton object for the Ameba platform.
+ * Concrete implementation of the PlatformManager singleton object for the Beken platform.
  */
 class PlatformManagerImpl final : public PlatformManager, public Internal::GenericPlatformManagerImpl_FreeRTOS<PlatformManagerImpl>
 {
@@ -82,7 +82,7 @@ inline PlatformManager & PlatformMgr(void)
  * Returns the platform-specific implementation of the PlatformManager singleton object.
  *
  * Chip applications can use this to gain access to features of the PlatformManager
- * that are specific to the Ameba platform.
+ * that are specific to the Beken platform.
  */
 inline PlatformManagerImpl & PlatformMgrImpl(void)
 {

@@ -20,14 +20,12 @@
 
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-//#include "chip_porting.h"
-
 #include <string.h>
 namespace chip {
 namespace DeviceLayer {
 namespace Internal {
 
-class AmebaConfig
+class BekenConfig
 {
 public:
     struct Key;
@@ -99,7 +97,7 @@ public:
     static void RunConfigUnitTest(void);
 };
 
-struct AmebaConfig::Key
+struct BekenConfig::Key
 {
     const char * Namespace;
     const char * Name;
@@ -107,7 +105,7 @@ struct AmebaConfig::Key
     bool operator==(const Key & other) const;
 };
 
-inline bool AmebaConfig::Key::operator==(const Key & other) const
+inline bool BekenConfig::Key::operator==(const Key & other) const
 {
     return strcmp(Namespace, other.Namespace) == 0 && strcmp(Name, other.Name) == 0;
 }

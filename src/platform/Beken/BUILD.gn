@@ -22,8 +22,8 @@ static_library("Beken") {
   sources = [
     "../FreeRTOS/SystemTimeSupport.cpp",
     "../SingletonConfigurationManager.cpp",
-    "AmebaConfig.cpp",
-    "AmebaConfig.h",
+    "BekenConfig.cpp",
+    "BekenConfig.h",
     "BLEManagerImpl.cpp",
     "BLEManagerImpl.h",
     "CHIPDevicePlatformConfig.h",
@@ -46,7 +46,6 @@ static_library("Beken") {
     "ServiceProvisioning.h",
     "SoftwareUpdateManagerImpl.h",
     "SystemPlatformConfig.h",
-    "SystemTimeSupport.cpp",
     "CHIPMem-Platform.cpp",
   ]
 

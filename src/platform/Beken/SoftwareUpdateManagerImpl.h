@@ -29,7 +29,7 @@ namespace DeviceLayer {
 
 /**
  * Concrete implementation of the SoftwareUpdateManager singleton object for the
- * Ameba platform.
+ * Beken platform.
  */
 class SoftwareUpdateManagerImpl final : public SoftwareUpdateManager,
                                         public Internal::GenericSoftwareUpdateManagerImpl<SoftwareUpdateManagerImpl>,
@@ -76,7 +76,7 @@ inline SoftwareUpdateManager & SoftwareUpdateMgr(void)
  * Returns the platform-specific implementation of the SoftwareUpdateManager singleton object.
  *
  * Internal components can use this to gain access to features of the SoftwareUpdateManager
- * that are specific to the Ameba platform.
+ * that are specific to the Beken platform.
  */
 inline SoftwareUpdateManagerImpl & SoftwareUpdateMgrImpl(void)
 {

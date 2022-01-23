@@ -19,7 +19,7 @@
 /**
  *    @file
  *          Platform-specific configuration overrides for the chip Device Layer
- *          on Ameba platform.
+ *          on Beken platform.
  */
 
 #pragma once
@@ -68,3 +68,6 @@
 
 #define CONFIG_RENDEZVOUS_MODE 6
 #define CHIP_DEVICE_CONFIG_CHIP_TASK_PRIORITY 2
+
+#define CHIP_DEVICE_CONFIG_ENABLE_EXTENDED_DISCOVERY 1
+#define CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONABLE_DISCOVERY 1

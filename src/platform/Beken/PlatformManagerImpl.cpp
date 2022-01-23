@@ -19,13 +19,13 @@
 /**
  *    @file
  *          Provides an implementation of the PlatformManager object
- *          for the Ameba platform.
+ *          for the Beken platform.
  */
 /* this file behaves like a config.h, comes first */
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
 #include <crypto/CHIPCryptoPAL.h>
-#include <platform/Ameba/DiagnosticDataProviderImpl.h>
+#include <platform/Beken/DiagnosticDataProviderImpl.h>
 #include <platform/PlatformManager.h>
 #include <platform/internal/GenericPlatformManagerImpl_FreeRTOS.cpp>
 

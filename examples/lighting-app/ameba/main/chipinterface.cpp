@@ -15,15 +15,12 @@
  *    limitations under the License.
  */
 
-//#include <platform_stdlib.h>
-
 #include "CHIPDeviceManager.h"
 #include "DeviceCallbacks.h"
 #include "Globals.h"
 #include "LEDWidget.h"
 #include "Server.h"
 
-//#include "chip_porting.h"
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 #include <platform/CHIPDeviceLayer.h>
@@ -32,7 +29,7 @@
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/server/OnboardingCodesUtil.h>
 #include <lib/support/ErrorStr.h>
-#include <platform/Beken/AmebaConfig.h>
+#include <platform/Beken/BekenConfig.h>
 #include <setup_payload/ManualSetupPayloadGenerator.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
 

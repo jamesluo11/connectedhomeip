@@ -18,7 +18,7 @@
 
 /**
  *    @file
- *          Platform-specific key value storage implementation for Ameba
+ *          Platform-specific key value storage implementation for Beken
  */
 /* this file behaves like a config.h, comes first */
 

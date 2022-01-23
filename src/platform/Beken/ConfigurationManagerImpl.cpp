@@ -19,18 +19,17 @@
 /**
  *    @file
  *          Provides the implementation of the Device Layer ConfigurationManager object
- *          for the Ameba.
+ *          for the Beken.
  */
 /* this file behaves like a config.h, comes first */
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-#include <platform/Beken/AmebaConfig.h>
+#include <platform/Beken/BekenConfig.h>
 #include <platform/ConfigurationManager.h>
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/internal/GenericConfigurationManagerImpl.cpp>
 #include <support/CodeUtils.h>
 #include <support/logging/CHIPLogging.h>
-//#include <wifi_conf.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -50,14 +49,14 @@ CHIP_ERROR ConfigurationManagerImpl::Init()
     bool failSafeArmed;
 
     // Force initialization of NVS namespaces if they doesn't already exist.
-    err = AmebaConfig::EnsureNamespace(AmebaConfig::kConfigNamespace_ChipFactory);
+    err = BekenConfig::EnsureNamespace(BekenConfig::kConfigNamespace_ChipFactory);
     SuccessOrExit(err);
-    err = AmebaConfig::EnsureNamespace(AmebaConfig::kConfigNamespace_ChipConfig);
+    err = BekenConfig::EnsureNamespace(BekenConfig::kConfigNamespace_ChipConfig);
     SuccessOrExit(err);
-    err = AmebaConfig::EnsureNamespace(AmebaConfig::kConfigNamespace_ChipCounters);
+    err = BekenConfig::EnsureNamespace(BekenConfig::kConfigNamespace_ChipCounters);
     SuccessOrExit(err);
 
-    if (AmebaConfig::ConfigValueExists(AmebaConfig::kCounterKey_RebootCount))
+    if (BekenConfig::ConfigValueExists(BekenConfig::kCounterKey_RebootCount))
     {
         err = GetRebootCount(rebootCount);
         SuccessOrExit(err);
@@ -72,20 +71,20 @@ CHIP_ERROR ConfigurationManagerImpl::Init()
         SuccessOrExit(err);
     }
 
-    if (!AmebaConfig::ConfigValueExists(AmebaConfig::kCounterKey_TotalOperationalHours))
+    if (!BekenConfig::ConfigValueExists(BekenConfig::kCounterKey_TotalOperationalHours))
     {
         err = StoreTotalOperationalHours(0);
         SuccessOrExit(err);
     }
 
-    if (!AmebaConfig::ConfigValueExists(AmebaConfig::kCounterKey_BootReason))
+    if (!BekenConfig::ConfigValueExists(BekenConfig::kCounterKey_BootReason))
     {
         err = StoreBootReason(DiagnosticDataProvider::BootReasonType::Unspecified);
         SuccessOrExit(err);
     }
 
     // Initialize the generic implementation base class.
-    err = Internal::GenericConfigurationManagerImpl<AmebaConfig>::Init();
+    err = Internal::GenericConfigurationManagerImpl<BekenConfig>::Init();
     SuccessOrExit(err);
 
     // If the fail-safe was armed when the device last shutdown, initiate a factory reset.
@@ -102,32 +101,32 @@ exit:
 
 CHIP_ERROR ConfigurationManagerImpl::GetRebootCount(uint32_t & rebootCount)
 {
-    return ReadConfigValue(AmebaConfig::kCounterKey_RebootCount, rebootCount);
+    return ReadConfigValue(BekenConfig::kCounterKey_RebootCount, rebootCount);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::StoreRebootCount(uint32_t rebootCount)
 {
-    return WriteConfigValue(AmebaConfig::kCounterKey_RebootCount, rebootCount);
+    return WriteConfigValue(BekenConfig::kCounterKey_RebootCount, rebootCount);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::GetTotalOperationalHours(uint32_t & totalOperationalHours)
 {
-    return ReadConfigValue(AmebaConfig::kCounterKey_TotalOperationalHours, totalOperationalHours);
+    return ReadConfigValue(BekenConfig::kCounterKey_TotalOperationalHours, totalOperationalHours);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::StoreTotalOperationalHours(uint32_t totalOperationalHours)
 {
-    return WriteConfigValue(AmebaConfig::kCounterKey_TotalOperationalHours, totalOperationalHours);
+    return WriteConfigValue(BekenConfig::kCounterKey_TotalOperationalHours, totalOperationalHours);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::GetBootReason(uint32_t & bootReason)
 {
-    return ReadConfigValue(AmebaConfig::kCounterKey_BootReason, bootReason);
+    return ReadConfigValue(BekenConfig::kCounterKey_BootReason, bootReason);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::StoreBootReason(uint32_t bootReason)
 {
-    return WriteConfigValue(AmebaConfig::kCounterKey_BootReason, bootReason);
+    return WriteConfigValue(BekenConfig::kCounterKey_BootReason, bootReason);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
@@ -166,7 +165,7 @@ void ConfigurationManagerImpl::InitiateFactoryReset()
 
 CHIP_ERROR ConfigurationManagerImpl::ReadPersistedStorageValue(::chip::Platform::PersistedStorage::Key key, uint32_t & value)
 {
-    AmebaConfig::Key configKey{ AmebaConfig::kConfigNamespace_ChipCounters, key };
+    BekenConfig::Key configKey{ BekenConfig::kConfigNamespace_ChipCounters, key };
 
     CHIP_ERROR err = ReadConfigValue(configKey, value);
     if (err == CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND)
@@ -178,68 +177,68 @@ CHIP_ERROR ConfigurationManagerImpl::ReadPersistedStorageValue(::chip::Platform:
 
 CHIP_ERROR ConfigurationManagerImpl::WritePersistedStorageValue(::chip::Platform::PersistedStorage::Key key, uint32_t value)
 {
-    AmebaConfig::Key configKey{ AmebaConfig::kConfigNamespace_ChipCounters, key };
+    BekenConfig::Key configKey{ BekenConfig::kConfigNamespace_ChipCounters, key };
     return WriteConfigValue(configKey, value);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::ReadConfigValue(Key key, bool & val)
 {
-    return AmebaConfig::ReadConfigValue(key, val);
+    return BekenConfig::ReadConfigValue(key, val);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::ReadConfigValue(Key key, uint32_t & val)
 {
-    return AmebaConfig::ReadConfigValue(key, val);
+    return BekenConfig::ReadConfigValue(key, val);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::ReadConfigValue(Key key, uint64_t & val)
 {
-    return AmebaConfig::ReadConfigValue(key, val);
+    return BekenConfig::ReadConfigValue(key, val);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::ReadConfigValueStr(Key key, char * buf, size_t bufSize, size_t & outLen)
 {
-    return AmebaConfig::ReadConfigValueStr(key, buf, bufSize, outLen);
+    return BekenConfig::ReadConfigValueStr(key, buf, bufSize, outLen);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSize, size_t & outLen)
 {
-    return AmebaConfig::ReadConfigValueBin(key, buf, bufSize, outLen);
+    return BekenConfig::ReadConfigValueBin(key, buf, bufSize, outLen);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::WriteConfigValue(Key key, bool val)
 {
-    return AmebaConfig::WriteConfigValue(key, val);
+    return BekenConfig::WriteConfigValue(key, val);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::WriteConfigValue(Key key, uint32_t val)
 {
-    return AmebaConfig::WriteConfigValue(key, val);
+    return BekenConfig::WriteConfigValue(key, val);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::WriteConfigValue(Key key, uint64_t val)
 {
-    return AmebaConfig::WriteConfigValue(key, val);
+    return BekenConfig::WriteConfigValue(key, val);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::WriteConfigValueStr(Key key, const char * str)
 {
-    return AmebaConfig::WriteConfigValueStr(key, str);
+    return BekenConfig::WriteConfigValueStr(key, str);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::WriteConfigValueStr(Key key, const char * str, size_t strLen)
 {
-    return AmebaConfig::WriteConfigValueStr(key, str, strLen);
+    return BekenConfig::WriteConfigValueStr(key, str, strLen);
 }
 
 CHIP_ERROR ConfigurationManagerImpl::WriteConfigValueBin(Key key, const uint8_t * data, size_t dataLen)
 {
-    return AmebaConfig::WriteConfigValueBin(key, data, dataLen);
+    return BekenConfig::WriteConfigValueBin(key, data, dataLen);
 }
 
 void ConfigurationManagerImpl::RunConfigUnitTest(void)
 {
-    AmebaConfig::RunConfigUnitTest();
+    BekenConfig::RunConfigUnitTest();
 }
 
 void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
@@ -249,7 +248,7 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     ChipLogProgress(DeviceLayer, "Performing factory reset");
 
     // Erase all values in the chip-config NVS namespace.
-    err = AmebaConfig::ClearNamespace(AmebaConfig::kConfigNamespace_ChipConfig);
+    err = BekenConfig::ClearNamespace(BekenConfig::kConfigNamespace_ChipConfig);
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "ClearNamespace(ChipConfig) failed: %s", chip::ErrorStr(err));

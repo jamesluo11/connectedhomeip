@@ -18,12 +18,10 @@
 
 /**
  *    @file
- *          Platform-specific key value storage implementation for Ameba
+ *          Platform-specific key value storage implementation for Beken
  */
 /* this file behaves like a config.h, comes first */
-//#include "chip_porting.h"
 #include <platform/KeyValueStoreManager.h>
-//#include <platform/Beken/AmebaConfig.h>
 #include <support/CodeUtils.h>
 #include "error.h"
 #include "flash_namespace_value.h"
@@ -37,38 +35,6 @@ KeyValueStoreManagerImpl KeyValueStoreManagerImpl::sInstance;
 CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t value_size, size_t * read_bytes_size,
                                           size_t offset_bytes)
 {
-#if 0
-    CHIP_ERROR err = CHIP_NO_ERROR;
-    int32_t ret    = -1;
-
-    if (!value)
-    {
-        return (err = CHIP_ERROR_INVALID_ARGUMENT);
-    }
-
-    if (offset_bytes > 0)
-    {
-        // Offset and partial reads are not supported in nvs, for now just return NOT_IMPLEMENTED. Support can be added in the
-        // future if this is needed.
-        return (err = CHIP_ERROR_NOT_IMPLEMENTED);
-    }
-
-    ret = getPref_bin_new(key, key, (uint8_t *) value, value_size, read_bytes_size);
-
-    if (TRUE == ret)
-    {
-        err = CHIP_NO_ERROR;
-        if (read_bytes_size)
-        {
-            *read_bytes_size = value_size;
-        }
-    }
-    else
-    {
-        err = CHIP_ERROR_INTERNAL;
-    }
-#endif
-
     CHIP_ERROR err = CHIP_NO_ERROR;
     int32_t ret    = -1;
 
@@ -104,23 +70,6 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
 
 CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, size_t value_size)
 {
-#if 0
-    CHIP_ERROR err = CHIP_NO_ERROR;
-    int32_t ret    = -1;
-
-    if (!value)
-    {
-        return (err = CHIP_ERROR_INVALID_ARGUMENT);
-    }
-
-    ret = setPref_new(key, key, (uint8_t *) value, value_size);
-
-    if (TRUE == ret)
-        err = CHIP_NO_ERROR;
-    else
-        err = CHIP_ERROR_INTERNAL;
-#endif
-
     CHIP_ERROR err = CHIP_NO_ERROR;
     uint32_t ret    = 0;
 
@@ -144,17 +93,6 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
 
 CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
 {
-#if 0
-    CHIP_ERROR err = CHIP_NO_ERROR;
-
-    if (TRUE == deleteKey(key, key))
-        err = CHIP_NO_ERROR;
-    else
-        err = CHIP_ERROR_INTERNAL;
-    return CHIP_NO_ERROR;
-#endif
-
-#if 1
     uint32_t ret    = 0;
     CHIP_ERROR err = CHIP_NO_ERROR;
     
@@ -170,8 +108,6 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
     }
 
     return err;
-#endif
-
 }
 
 } // namespace PersistedStorage

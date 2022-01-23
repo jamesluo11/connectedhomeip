@@ -19,20 +19,20 @@
 /**
  *    @file
  *          Provides an implementation of the ConfigurationManager object
- *          for the Ameba platform.
+ *          for the Beken platform.
  */
 #pragma once
 
-#include <platform/Beken/AmebaConfig.h>
+#include <platform/Beken/BekenConfig.h>
 #include <platform/ConnectivityManager.h>
 #include <platform/internal/GenericConfigurationManagerImpl.h>
 
 namespace chip {
 namespace DeviceLayer {
 /**
- * Concrete implementation of the ConfigurationManager singleton object for the Ameba platform.
+ * Concrete implementation of the ConfigurationManager singleton object for the Beken platform.
  */
-class ConfigurationManagerImpl: public Internal::GenericConfigurationManagerImpl <Internal::AmebaConfig>
+class ConfigurationManagerImpl: public Internal::GenericConfigurationManagerImpl <Internal::BekenConfig>
 {
 public:
     // This returns an instance of this class.

@@ -18,16 +18,14 @@
 /**
  *    @file
  *          Provides an implementation of the DiagnosticDataProvider object
- *          for Ameba platform.
+ *          for Beken platform.
  */
 
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
 #include <crypto/CHIPCryptoPAL.h>
-#include <platform/Ameba/DiagnosticDataProviderImpl.h>
+#include <platform/Beken/DiagnosticDataProviderImpl.h>
 #include <platform/DiagnosticDataProvider.h>
-
-//#include <lwip_netconf.h>
 
 namespace chip {
 namespace DeviceLayer {
