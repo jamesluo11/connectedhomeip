@@ -1379,13 +1379,12 @@ CHIP_ERROR DeviceCommissioner::SendOperationalCertificate(CommissioneeDeviceProx
 
     // TODO(#13825): If not passed by the signer, the commissioner should
     // provide its current IPK to the commissionee in the AddNOC command.
-    const uint8_t placeHolderIpk[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    ReturnErrorOnFailure(cluster.AddNOC(
-        successCallback, failureCallback, nocCertBuf, icaCertBuf,
-        device->GetIpk().HasValue()
-            ? device->GetIpk().Value()
-            : AesCcm128KeySpan(placeHolderIpk),
-        device->GetAdminSubject().HasValue() ? device->GetAdminSubject().Value() : mLocalId.GetNodeId(), mVendorId));
+    const uint8_t placeHolderIpk[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    ReturnErrorOnFailure(
+        cluster.AddNOC(successCallback, failureCallback, nocCertBuf, icaCertBuf,
+                       device->GetIpk().HasValue() ? device->GetIpk().Value() : AesCcm128KeySpan(placeHolderIpk),
+                       device->GetAdminSubject().HasValue() ? device->GetAdminSubject().Value() : mLocalId.GetNodeId(), mVendorId));
 
     ChipLogProgress(Controller, "Sent operational certificate to the device");
 
