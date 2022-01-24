@@ -31,6 +31,8 @@
 #include <support/CodeUtils.h>
 #include <support/logging/CHIPLogging.h>
 
+#include "wlan_ui_pub.h"
+
 namespace chip {
 namespace DeviceLayer {
 
@@ -48,6 +50,7 @@ CHIP_ERROR ConfigurationManagerImpl::Init()
     uint32_t rebootCount;
     bool failSafeArmed;
 
+    ChipLogProgress(DeviceLayer, "ConfigurationManagerImpl::Init");
     // Force initialization of NVS namespaces if they doesn't already exist.
     err = BekenConfig::EnsureNamespace(BekenConfig::kConfigNamespace_ChipFactory);
     SuccessOrExit(err);
@@ -131,24 +134,7 @@ CHIP_ERROR ConfigurationManagerImpl::StoreBootReason(uint32_t bootReason)
 
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
 {
-#if 0
-    char temp[32];
-    uint32_t mac[ETH_ALEN];
-    int i = 0;
-
-    wifi_get_mac_address(temp);
-
-    char * token = strtok(temp, ":");
-    while (token != NULL)
-    {
-        mac[i] = (uint32_t) strtol(token, NULL, 16);
-        token  = strtok(NULL, ":");
-        i++;
-    }
-
-    for (i = 0; i < ETH_ALEN; i++)
-        buf[i] = mac[i] & 0xFF;
-#endif
+    bk_wifi_get_station_mac_address((char*)buf);
     return CHIP_NO_ERROR;
 }
 
@@ -256,7 +242,7 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
 
     // Restart the system.
     ChipLogProgress(DeviceLayer, "System restarting");
-    // sys_reset();
+    bk_reboot();
 }
 
 } // namespace DeviceLayer
