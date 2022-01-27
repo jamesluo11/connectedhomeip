@@ -49,7 +49,10 @@ static_library("Beken") {
     "CHIPMem-Platform.cpp",
   ]
 
-  deps = [ "${chip_root}/src/lib/dnssd:platform_header" ]
+  deps = [ 
+    "${chip_root}/src/lib/dnssd:platform_header",
+    "${chip_root}/src/setup_payload",
+ ]
 
   public_deps = [
     "${chip_root}/src/crypto",

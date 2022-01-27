@@ -183,6 +183,10 @@ private:
     static void ble_adv_timer_timeout_handle(TimerHandle_t xTimer);
     static void CancelBleAdvTimeoutTimer(void);
     static void StartBleAdvTimeoutTimer(uint32_t aTimeoutInMs);
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+    void HandleC3CharRead(void * param);
+#endif
+
 };
 
 /**
