@@ -28,6 +28,9 @@
 
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
 #include <ble/CHIPBleServiceData.h>
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+#include <setup_payload/AdditionalDataPayloadGenerator.h>
+#endif
 
 #include "stdio.h"
 #include "timers.h"
@@ -84,20 +87,25 @@ static const uint8_t _svc_uuid[16] = {0xF6,0xFF,0,0,0x0,0x0,0,0,0,0,0x0,0x0,0,0,
 //#define UUID_CHIPoBLECharact_RX   { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F, 0x9D, 0x11 }
 #define ChipUUID_CHIPoBLECharact_TX   { 0x12, 0x9D, 0x9F, 0x42, 0x9C, 0x4F, 0x9F, 0x95, 0x59, 0x45, 0x3D, 0x26, 0xF5, 0x2E, 0xEE, 0x18 }
 //#define ChipUUID_CHIPoBLECharact_TX   { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F, 0x9D, 0x12 }
-
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+#define UUID_CHIPoBLEChar_C3 { 0x04, 0x8F, 0x21, 0x83, 0x8A, 0x74, 0x7D, 0xB8, 0xF2, 0x45, 0x72, 0x87, 0x38, 0x02, 0x63, 0x64 }
+#endif
 #define BEKEN_ATT_DECL_PRIMARY_SERVICE_128     {0x00,0x28,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #define BEKEN_ATT_DECL_CHARACTERISTIC_128      {0x03,0x28,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #define BEKEN_ATT_DESC_CLIENT_CHAR_CFG_128     {0x02,0x29,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 
 enum
 {
-    SVR_FFF6_IDX_SVC  = 0,
-    SVR_FFF6_RX_DECL  = 1,
-    SVR_FFF6_RX_VALUE = 2,
-    SVR_FFF6_TX_DECL  = 3,
-    SVR_FFF6_TX_VALUE = 4,
-    SVR_FFF6_TX_CFG   = 5,
-    SVR_FFF6_MAX      = 6,
+    SVR_FFF6_IDX_SVC,
+    SVR_FFF6_RX_DECL ,
+    SVR_FFF6_RX_VALUE,
+    SVR_FFF6_TX_DECL,
+    SVR_FFF6_TX_VALUE,
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+    SVR_FFF6_C3_VALUE,
+#endif
+    SVR_FFF6_TX_CFG,
+    SVR_FFF6_MAX,
 };
 
 bk_attm_desc_t svr_fff6_att_db[SVR_FFF6_MAX] =
@@ -114,6 +122,9 @@ bk_attm_desc_t svr_fff6_att_db[SVR_FFF6_MAX] =
     [SVR_FFF6_TX_DECL]    = {BEKEN_ATT_DECL_CHARACTERISTIC_128,  BK_PERM_SET(RD, ENABLE) | BK_PERM_SET(NTF, ENABLE), 0, 0},
     ////  UUID_LEN_POS   BK_PERM_RIGHT_UUID_128 RD_POS
     [SVR_FFF6_TX_VALUE]   = {ChipUUID_CHIPoBLECharact_TX,     BK_PERM_SET(RD, ENABLE) | BK_PERM_SET(NTF, ENABLE), BK_PERM_SET(RI, ENABLE) | BK_PERM_SET(UUID_LEN, UUID_128), 512},
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+    [SVR_FFF6_C3_VALUE]  = {UUID_CHIPoBLEChar_C3,            BK_PERM_SET(RD, ENABLE), BK_PERM_SET(RI, ENABLE) | BK_PERM_SET(UUID_LEN, UUID_128), 512},
+#endif
     [SVR_FFF6_TX_CFG]    = {BEKEN_ATT_DESC_CLIENT_CHAR_CFG_128, BK_PERM_SET(RD, ENABLE) | BK_PERM_SET(WRITE_REQ, ENABLE), 0, 2},
 };
 
@@ -706,7 +717,11 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
             ExitNow();
         }
 
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+        deviceIdInfo.SetAdditionalDataFlag(true);
+#endif
         VerifyOrExit(index + sizeof(deviceIdInfo) <= sizeof(advData), err = CHIP_ERROR_OUTBOUND_MESSAGE_TOO_BIG);
+
         memcpy(&advData[index], &deviceIdInfo, sizeof(deviceIdInfo));
         index = static_cast<uint8_t>(index + sizeof(deviceIdInfo));
         bk_ble_set_adv_data(adv_actv_idx, advData, index, beken_ble_cmd_cb);
@@ -1041,6 +1056,45 @@ void BLEManagerImpl::beken_ble_cmd_cb(ble_cmd_t cmd, ble_cmd_param_t *param)
     }
 }
 
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+void BLEManagerImpl::HandleC3CharRead(void * param)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    chip::System::PacketBufferHandle bufferHandle;
+    read_req_t *r_req = (read_req_t *)param;
+
+    char serialNumber[ConfigurationManager::kMaxSerialNumberLength + 1];
+    uint16_t lifetimeCounter = 0;
+    BitFlags<AdditionalDataFields> additionalDataFields;
+
+#if CHIP_ENABLE_ROTATING_DEVICE_ID
+    err = ConfigurationMgr().GetSerialNumber(serialNumber, sizeof(serialNumber));
+    SuccessOrExit(err);
+    err = ConfigurationMgr().GetLifetimeCounter(lifetimeCounter);
+    SuccessOrExit(err);
+
+    additionalDataFields.Set(AdditionalDataFields::RotatingDeviceId);
+#endif /* CHIP_ENABLE_ROTATING_DEVICE_ID */
+
+    err = AdditionalDataPayloadGenerator().generateAdditionalDataPayload(lifetimeCounter, serialNumber, strlen(serialNumber),
+                                                                         bufferHandle, additionalDataFields);
+    SuccessOrExit(err);
+    if(r_req->value == NULL)
+    {
+        ChipLogError(DeviceLayer, "param->value == NULL");
+        return;
+    }
+    memcpy(r_req->value, bufferHandle->Start(), bufferHandle->DataLength());
+    r_req->length = bufferHandle->DataLength();
+exit:
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "Failed to generate TLV encoded Additional Data");
+    }
+    return;
+}
+#endif
+
 void BLEManagerImpl::ble_event_notice(ble_notice_t notice, void *param)
 {
     ///BLEManagerImpl * blemgr = static_cast<BLEManagerImpl *>(param);
@@ -1085,6 +1139,13 @@ void BLEManagerImpl::ble_event_notice(ble_notice_t notice, void *param)
         {
             sInstance.HandleTXCharCCCDRead(param);
         }
+#if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
+        if (r_req->att_idx == SVR_FFF6_C3_VALUE)
+        {
+            ChipLogProgress(DeviceLayer, "SVR_FFF6_OPT_VALUE!!!!\r\n");
+            sInstance.HandleTXCharRead((void*)param);
+        }
+#endif
         break;
     }
     case BLE_5_TX_DONE:
