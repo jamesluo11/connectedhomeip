@@ -37,20 +37,23 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
     int32_t ret    = -1;
-
-    if ((!value) || (!read_bytes_size))
-    {
-        return (err = CHIP_ERROR_INVALID_ARGUMENT);
-    }
-
-    if (offset_bytes > 0)
+    uint32_t dwTeReadBytes = 0;
+    
+    if ((!value) || offset_bytes > 0)
     {
         // Offset and partial reads are not supported in nvs, for now just return NOT_IMPLEMENTED. Support can be added in the
         // future if this is needed.
-        return (err = CHIP_ERROR_NOT_IMPLEMENTED);
+        return (err = CHIP_ERROR_INVALID_ARGUMENT);
     }
 
-     ret = bk_read_data( key,key,(char *) value,value_size,(uint32_t *)read_bytes_size);
+    if(read_bytes_size == NULL)
+    {
+        ret = bk_read_data( key,key,(char *) value,value_size,&dwTeReadBytes);
+    }
+    else
+    {
+        ret = bk_read_data( key,key,(char *) value,value_size,(uint32_t *)read_bytes_size);
+    }
 
     if (ret == kNoErr)
     {
@@ -65,7 +68,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         err = CHIP_ERROR_INTERNAL;
     }
 
-    return CHIP_NO_ERROR;
+    return err;
 }
 
 CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, size_t value_size)
@@ -77,8 +80,8 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
     {
         return (err = CHIP_ERROR_INVALID_ARGUMENT);
     }
-    
     ret = bk_write_data( key,key, (char *)value,value_size);
+    
     if (ret == kNoErr)
     {
         err = CHIP_NO_ERROR;
@@ -88,7 +91,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
         err = CHIP_ERROR_INTERNAL;
     }
 
-    return CHIP_NO_ERROR;
+    return err;
 }
 
 CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
