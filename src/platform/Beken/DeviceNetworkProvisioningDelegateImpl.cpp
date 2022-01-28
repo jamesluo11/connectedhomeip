@@ -28,7 +28,7 @@ namespace DeviceLayer {
 CHIP_ERROR DeviceNetworkProvisioningDelegateImpl::_ProvisionWiFiNetwork(const char * ssid, const char * key)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-
+       
     ChipLogProgress(NetworkProvisioning, "BekenNetworkProvisioningDelegate: SSID: %s", ssid);
     err = SetWiFiStationProvisioning(ssid, key);
     if (err != CHIP_NO_ERROR)

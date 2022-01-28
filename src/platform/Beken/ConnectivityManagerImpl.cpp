@@ -42,6 +42,10 @@
 #include <lwip/netif.h>
 
 #include "wlan_ui_pub.h"
+#include "flash_namespace_value.h"
+
+#define BEKEN_WIFI_INFO   "BekenWiFi"
+static uint32_t dwWifiExit =  0;
 
 using namespace ::chip;
 using namespace ::chip::Inet;
@@ -74,6 +78,19 @@ CHIP_ERROR ConnectivityManagerImpl::_Init()
     // Ensure that station mode is enabled in the WiFi layer.
     //wifi_set_mode(RTW_MODE_STA);
     ;
+    ssid_key_save_t fci = {{0}};
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    
+    err = PersistedStorage::KeyValueStoreMgr().Get(BEKEN_WIFI_INFO, &fci,sizeof(ssid_key_save_t));
+    if(err !=  CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer,"%s %d KeyValueGet failed\r\n",__FUNCTION__,__LINE__);
+    }
+    else if(fci.ucssid[0] != 0)
+    {
+        dwWifiExit = 1;
+        ChipLogProgress(DeviceLayer,"Station get ssid: %s %s \r\n",fci.ucssid,fci.ucKey);
+    }
 
     // If there is no persistent station provision...
     if (!IsWiFiStationProvisioned())
@@ -135,7 +152,7 @@ void ConnectivityManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
     if (event->Type == DeviceEventType::kRtkWiFiStationConnectedEvent)
     {
-        ChipLogProgress(DeviceLayer, "WIFI_EVENT_STA_CONNECTED");
+        ChipLogProgress(DeviceLayer, "_OnPlatformEvent WIFI_EVENT_STA_CONNECTED");
         if (mWiFiStationState == kWiFiStationState_Connecting)
         {
             ChangeWiFiStationState(kWiFiStationState_Connecting_Succeeded);
@@ -154,6 +171,11 @@ ConnectivityManager::WiFiStationMode ConnectivityManagerImpl::_GetWiFiStationMod
         mWiFiStationMode = (wifi_mode == RTW_MODE_STA) ? kWiFiStationMode_Enabled : kWiFiStationMode_Disabled;
     }
 #endif
+    if(dwWifiExit)
+    {
+        mWiFiStationMode = kWiFiStationMode_Enabled;
+    }
+
     //TODO should enabled
     return kWiFiStationMode_Enabled;
 }
@@ -195,15 +217,26 @@ exit:
 bool ConnectivityManagerImpl::_IsWiFiStationProvisioned(void)
 {
     wlan_sta_config_t config;
+    bool rtn = false;
 
-    memset(&config, 0, sizeof(config));
-    config.field = WLAN_STA_FIELD_SSID;
-    if(0 != wlan_sta_get_config(&config))
+    if(dwWifiExit)
     {
-        ChipLogError(DeviceLayer, "wlan_sta_get_config failed!");
-        return false;
+        rtn =  true ;
     }
-    return (config.u.ssid.ssid[0] != 0) ? true : false;
+    else
+    {
+        memset(&config, 0, sizeof(config));
+        config.field = WLAN_STA_FIELD_SSID;
+        if(0 != wlan_sta_get_config(&config))
+        {
+            ChipLogError(DeviceLayer, "wlan_sta_get_config failed!");
+            return false;
+        }
+        
+        rtn = (config.u.ssid.ssid[0] != 0) ? true : false;
+    }
+
+    return rtn;
 }
 
 void ConnectivityManagerImpl::_ClearWiFiStationProvision(void)
@@ -296,11 +329,19 @@ static bool stationConnected = false;
 void ConnectivityManagerImpl::wlan_status_cb(void *ctxt)
 {
     int notice_event = *(unsigned int*)ctxt;
+    ssid_key_save_t wpa_save = {{0}};
 
     switch(notice_event){
     case RW_EVT_STA_GOT_IP:
         stationConnected = true;
         WiFiStationConnectedHandler();
+    
+        if (wpa_ssid_key_get(&wpa_save))
+        {
+            ChipLogError(DeviceLayer, "wpa_ssid_key_get  fail");
+            return ;
+        }
+        PersistedStorage::KeyValueStoreMgr().Put(BEKEN_WIFI_INFO, (const void *)&wpa_save, sizeof(ssid_key_save_t));
         ChipLogProgress(DeviceLayer, "RW_EVT_STA_GOT_IP");
         break;
     case RW_EVT_STA_CONNECTED:
@@ -319,9 +360,7 @@ void ConnectivityManagerImpl::wlan_status_cb(void *ctxt)
 void ConnectivityManagerImpl::DriveStationState()
 {
     int ret;
-    
     GetWiFiStationMode();
-
     // If the station interface is NOT under application control...
     if (mWiFiStationMode != kWiFiStationMode_ApplicationControlled)
     {
@@ -403,7 +442,7 @@ void ConnectivityManagerImpl::DriveStationState()
         // not presently under application control), AND the system is not in the process of
         // scanning, then...
         ChipLogProgress(DeviceLayer, "mWiFiStationMode:%d, IsWiFiStationProvisioned:%d", mWiFiStationMode, IsWiFiStationProvisioned());
-        if (mWiFiStationMode == kWiFiStationMode_Enabled && IsWiFiStationProvisioned() &&
+        if (mWiFiStationMode == kWiFiStationMode_Enabled && IsWiFiStationProvisioned() && 
             mWiFiStationState != kWiFiStationState_Connecting)
         {
             // Initiate a connection to the AP if we haven't done so before, or if enough
@@ -411,13 +450,28 @@ void ConnectivityManagerImpl::DriveStationState()
             if (mLastStationConnectFailTime == System::Clock::kZero ||
                 now >= mLastStationConnectFailTime + mWiFiStationReconnectInterval)
             {
-                ChipLogProgress(DeviceLayer, "Attempting to connect WiFi station interface");
-                bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
-                if(0 != wlan_sta_connect(0))//assume not support fast connect
-                {
-                    ChipLogError(DeviceLayer, "wlan_sta_connect() failed!");
-                    return;
-                }
+                    ChipLogProgress(DeviceLayer,"Attempting to connect WiFi station interface \r\n");
+                    ssid_key_save_t fci = {{0}};
+                    network_InitTypeDef_st network_cfg;
+                    
+                    PersistedStorage::KeyValueStoreMgr().Get(BEKEN_WIFI_INFO, &fci,sizeof(ssid_key_save_t));
+                    bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
+
+                    memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
+                    network_cfg.wifi_mode = BK_STATION;
+                    strcpy(network_cfg.wifi_ssid, (char *)fci.ucssid);
+                    
+                    strcpy(network_cfg.wifi_key, (char *)fci.ucKey);
+                    network_cfg.dhcp_mode = DHCP_CLIENT;
+
+                    bk_wlan_start(&network_cfg);
+                #if 0
+                    if(0 != wlan_sta_connect(0))//assume not support fast connect
+                    {
+                        ChipLogError(DeviceLayer, "wlan_sta_connect() failed!");
+                        return;
+                    }
+                #endif
                 ChangeWiFiStationState(kWiFiStationState_Connecting);
             }
 
