@@ -25,9 +25,11 @@
 #include <support/CHIPMem.h>
 
 #include <app/clusters/identify-server/identify-server.h>
+#include <app/clusters/network-commissioning/network-commissioning.h>
 #include <app/server/OnboardingCodesUtil.h>
 #include <lib/support/ErrorStr.h>
 #include <platform/Beken/BekenConfig.h>
+#include <platform/Beken/NetworkCommissioningDriver.h>
 #include <setup_payload/ManualSetupPayloadGenerator.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
 
@@ -40,6 +42,11 @@ using namespace ::chip::DeviceLayer;
 #define EXAMPLE_VENDOR_TAG_IP 1
 
 static DeviceCallbacks EchoCallbacks;
+
+namespace {
+app::Clusters::NetworkCommissioning::Instance
+    sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::BekenWiFiDriver::GetInstance()));
+} // namespace
 
 // need to check CONFIG_RENDEZVOUS_MODE
 bool isRendezvousBLE()
@@ -260,6 +267,7 @@ extern "C" void ChipTest(void)
     chip::Server::GetInstance().Init();
     // Initialize device attestation config
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
+    sWiFiNetworkCommissioningInstance.Init();
 
     std::string qrCodeText = createSetupPayload();
 
