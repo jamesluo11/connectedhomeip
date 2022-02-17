@@ -45,14 +45,14 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         // future if this is needed.
         return (err = CHIP_ERROR_INVALID_ARGUMENT);
     }
-
+    
     if(read_bytes_size == NULL)
     {
-        ret = bk_read_data( key,key,(char *) value,value_size,&dwTeReadBytes);
+        ret = bk_read_data(GetKVNameSpaceName(key), key, (char *) value, value_size, &dwTeReadBytes);
     }
     else
     {
-        ret = bk_read_data( key,key,(char *) value,value_size,(uint32_t *)read_bytes_size);
+        ret = bk_read_data(GetKVNameSpaceName(key), key, (char *) value, value_size, (uint32_t *)read_bytes_size);
     }
 
     if (ret == kNoErr)
@@ -75,12 +75,13 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
     uint32_t ret    = 0;
-
+    bk_printf("put key:%s \r\n", key);
     if (!value)
     {
         return (err = CHIP_ERROR_INVALID_ARGUMENT);
     }
-    ret = bk_write_data( key,key, (char *)value,value_size);
+    
+    ret = bk_write_data(GetKVNameSpaceName(key), key, (char *)value, value_size);
     
     if (ret == kNoErr)
     {
@@ -99,7 +100,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
     uint32_t ret    = 0;
     CHIP_ERROR err = CHIP_NO_ERROR;
     
-    ret = bk_clean_data ( key,key);
+    ret = bk_clean_data (GetKVNameSpaceName(key), key);
     
     if (kNoErr == ret)
     {
@@ -111,6 +112,21 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
     }
 
     return err;
+}
+
+const char* KeyValueStoreManagerImpl::GetKVNameSpaceName(const char *key)
+{
+    int idx = 0;
+    const char* BekenkeyValueNameSpace[] = {"BEKEN0", "BEKEN1", "BEKEN2", "BEKEN3", "BEKEN4"};//Put all key-value date into this namespace
+    if (key != NULL)
+    {
+        int i, len = strlen(key);
+        int sum = 0;
+        for (i = 0; i < len; i += 2)
+           sum += key[i];
+        idx = sum % (sizeof(BekenkeyValueNameSpace)/sizeof(BekenkeyValueNameSpace[0]));
+    }
+    return BekenkeyValueNameSpace[idx];
 }
 
 } // namespace PersistedStorage

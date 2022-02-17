@@ -32,8 +32,6 @@ static_library("Beken") {
     "ConfigurationManagerImpl.h",
     "ConnectivityManagerImpl.cpp",
     "ConnectivityManagerImpl.h",
-    "DeviceNetworkProvisioningDelegateImpl.cpp",
-    "DeviceNetworkProvisioningDelegateImpl.h",
     "DiagnosticDataProviderImpl.cpp",
     "DiagnosticDataProviderImpl.h",
     "KeyValueStoreManagerImpl.cpp",
@@ -42,10 +40,9 @@ static_library("Beken") {
     "LwIPCoreLock.cpp",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
-    "ServiceProvisioning.cpp",
-    "ServiceProvisioning.h",
     "SoftwareUpdateManagerImpl.h",
     "SystemPlatformConfig.h",
+    "NetworkCommissioningWiFiDriver.cpp",
     "CHIPMem-Platform.cpp",
   ]
 

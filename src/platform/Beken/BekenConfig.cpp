@@ -1,6 +1,6 @@
 /*
  *
- *    Copyright (c) 2020 Project CHIP Authors
+ *    Copyright (c) 2020-2022 Project CHIP Authors
  *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +59,10 @@ const BekenConfig::Key BekenConfig::kConfigKey_HardwareVersion     = { kConfigNa
 const BekenConfig::Key BekenConfig::kConfigKey_ManufacturingDate   = { kConfigNamespace_ChipFactory, "mfg-date" };
 const BekenConfig::Key BekenConfig::kConfigKey_SetupPinCode        = { kConfigNamespace_ChipFactory, "pin-code" };
 const BekenConfig::Key BekenConfig::kConfigKey_SetupDiscriminator  = { kConfigNamespace_ChipFactory, "discriminator" };
+const BekenConfig::Key BekenConfig::kConfigKey_Spake2pIterationCount = { kConfigNamespace_ChipFactory, "iteration-count" };
+const BekenConfig::Key BekenConfig::kConfigKey_Spake2pSalt           = { kConfigNamespace_ChipFactory, "salt" };
+const BekenConfig::Key BekenConfig::kConfigKey_Spake2pVerifier       = { kConfigNamespace_ChipFactory, "verifier" };
+const BekenConfig::Key BekenConfig::kConfigKey_UniqueId              = { kConfigNamespace_ChipFactory, "uniqueId" };
 
 // Keys stored in the chip-config namespace
 const BekenConfig::Key BekenConfig::kConfigKey_FabricId                    = { kConfigNamespace_ChipConfig, "fabric-id" };
@@ -75,10 +79,7 @@ const BekenConfig::Key BekenConfig::kConfigKey_OperationalDeviceICACerts   = { k
 const BekenConfig::Key BekenConfig::kConfigKey_OperationalDevicePrivateKey = { kConfigNamespace_ChipConfig, "op-device-key" };
 const BekenConfig::Key BekenConfig::kConfigKey_RegulatoryLocation          = { kConfigNamespace_ChipConfig, "regulatory-location" };
 const BekenConfig::Key BekenConfig::kConfigKey_CountryCode                 = { kConfigNamespace_ChipConfig, "country-code" };
-const BekenConfig::Key BekenConfig::kConfigKey_ActiveLocale                = { kConfigNamespace_ChipConfig, "active-locale" };
 const BekenConfig::Key BekenConfig::kConfigKey_Breadcrumb                  = { kConfigNamespace_ChipConfig, "breadcrumb" };
-const BekenConfig::Key BekenConfig::kConfigKey_HourFormat                  = { kConfigNamespace_ChipConfig, "hour-format" };
-const BekenConfig::Key BekenConfig::kConfigKey_CalendarType                = { kConfigNamespace_ChipConfig, "calendar-type" };
 
 // Keys stored in the Chip-counters namespace
 const BekenConfig::Key BekenConfig::kCounterKey_RebootCount           = { kConfigNamespace_ChipCounters, "reboot-count" };

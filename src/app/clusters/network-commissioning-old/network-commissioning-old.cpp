@@ -41,8 +41,8 @@
 // Include DeviceNetworkProvisioningDelegateImpl for WiFi provisioning.
 // TODO: Enable wifi network should be done by ConnectivityManager. (Or other platform neutral interfaces)
 #if defined(CHIP_DEVICE_LAYER_TARGET)
-#define DEVICENETWORKPROVISIONING_HEADER <platform/CHIP_DEVICE_LAYER_TARGET/DeviceNetworkProvisioningDelegateImpl.h>
-#include DEVICENETWORKPROVISIONING_HEADER
+//#define DEVICENETWORKPROVISIONING_HEADER <platform/CHIP_DEVICE_LAYER_TARGET/DeviceNetworkProvisioningDelegateImpl.h>
+//#include DEVICENETWORKPROVISIONING_HEADER
 #endif
 
 // TODO: Configuration should move to build-time configuration
@@ -240,9 +240,9 @@ CHIP_ERROR DoConnectNetwork(NetworkInfo * network)
     {
         // TODO: Currently, DeviceNetworkProvisioningDelegateImpl assumes that ssid and credentials are null terminated strings,
         // which is not correct, this should be changed once we have better method for commissioning wifi networks.
-        DeviceLayer::DeviceNetworkProvisioningDelegateImpl deviceDelegate;
-        ReturnErrorOnFailure(deviceDelegate.ProvisionWiFi(reinterpret_cast<const char *>(network->mData.mWiFi.mSSID),
-                                                          reinterpret_cast<const char *>(network->mData.mWiFi.mCredentials)));
+        //DeviceLayer::DeviceNetworkProvisioningDelegateImpl deviceDelegate;
+        //ReturnErrorOnFailure(deviceDelegate.ProvisionWiFi(reinterpret_cast<const char *>(network->mData.mWiFi.mSSID),
+                                                          //reinterpret_cast<const char *>(network->mData.mWiFi.mCredentials)));
         break;
     }
 #else
