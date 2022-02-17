@@ -63,12 +63,13 @@ public:
     static const Key kConfigKey_SetupDiscriminator;
     static const Key kConfigKey_RegulatoryLocation;
     static const Key kConfigKey_CountryCode;
-    static const Key kConfigKey_ActiveLocale;
     static const Key kConfigKey_Breadcrumb;
-    static const Key kConfigKey_HourFormat;
-    static const Key kConfigKey_CalendarType;
+    static const Key kConfigKey_Spake2pIterationCount;
+    static const Key kConfigKey_Spake2pSalt;
+    static const Key kConfigKey_Spake2pVerifier;
 
     // Counter keys
+    static const Key kConfigKey_UniqueId;
     static const Key kCounterKey_RebootCount;
     static const Key kCounterKey_UpTime;
     static const Key kCounterKey_TotalOperationalHours;
