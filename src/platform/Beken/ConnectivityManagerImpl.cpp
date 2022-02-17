@@ -43,6 +43,7 @@
 
 #include "wlan_ui_pub.h"
 #include "flash_namespace_value.h"
+#include "NetworkCommissioningDriver.h"
 
 #define BEKEN_WIFI_INFO   "BekenWiFi"
 static uint32_t dwWifiExit =  0;
@@ -346,6 +347,7 @@ void ConnectivityManagerImpl::wlan_status_cb(void *ctxt)
         break;
     case RW_EVT_STA_CONNECTED:
         ChipLogProgress(DeviceLayer, "RW_EVT_STA_CONNECTED");
+	    NetworkCommissioning::BekenWiFiDriver::GetInstance().OnConnectWiFiNetwork();
         break;
     case RW_EVT_STA_DISCONNECTED:
         stationConnected = false;

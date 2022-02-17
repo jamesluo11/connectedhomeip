@@ -24,6 +24,9 @@
 
 #pragma once
 
+#include <cstring>
+
+
 namespace chip {
 namespace DeviceLayer {
 namespace PersistedStorage {
@@ -49,6 +52,7 @@ private:
     friend KeyValueStoreManagerImpl & KeyValueStoreMgrImpl();
 
     static KeyValueStoreManagerImpl sInstance;
+    const char* GetKVNameSpaceName(const char * key);
 };
 
 /**
