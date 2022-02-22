@@ -44,13 +44,14 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetCurrentHeapFree(uint64_t & currentHeap
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetCurrentHeapUsed(uint64_t & currentHeapUsed)
 {
-    //currentHeapUsed = xPortGetTotalHeapSize() - xPortGetFreeHeapSize();
+    currentHeapUsed = prvHeapGetTotalSize() - xPortGetFreeHeapSize();
+    ChipLogProgress(DeviceLayer, "beken-GetCurrentHeapUsed\n");
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetCurrentHeapHighWatermark(uint64_t & currentHeapHighWatermark)
 {
-   // currentHeapHighWatermark = xPortGetTotalHeapSize() - xPortGetMinimumEverFreeHeapSize();
+    currentHeapHighWatermark = prvHeapGetTotalSize() - xPortGetMinimumEverFreeHeapSize();
     return CHIP_NO_ERROR;
 }
 
