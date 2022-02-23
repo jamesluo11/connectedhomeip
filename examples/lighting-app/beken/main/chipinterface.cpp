@@ -38,8 +38,8 @@ using namespace ::chip::Credentials;
 using namespace ::chip::DeviceManager;
 using namespace ::chip::DeviceLayer;
 
-#define QRCODE_BASE_URL "https://dhrishi.github.io/connectedhomeip/qrcode.html"
-#define EXAMPLE_VENDOR_TAG_IP 1
+//#define QRCODE_BASE_URL "https://dhrishi.github.io/connectedhomeip/qrcode.html"
+//#define EXAMPLE_VENDOR_TAG_IP 1
 
 static DeviceCallbacks EchoCallbacks;
 
@@ -54,93 +54,6 @@ bool isRendezvousBLE()
     RendezvousInformationFlags flags = RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE);
     return flags.Has(RendezvousInformationFlag::kBLE);
 }
-
-std::string createSetupPayload()
-{
-    CHIP_ERROR err = CHIP_NO_ERROR;
-    std::string result;
-
-    uint16_t discriminator;
-    err = ConfigurationMgr().GetSetupDiscriminator(discriminator);
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogProgress(Zcl, "Couldn't get discriminator: %s\r\n", ErrorStr(err));
-        return result;
-    }
-    ChipLogProgress(Zcl, "Setup discriminator: %u (0x%x)\r\n", discriminator, discriminator);
-
-    uint32_t setupPINCode;
-    err = ConfigurationMgr().GetSetupPinCode(setupPINCode);
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogProgress(Zcl, "Couldn't get setupPINCode: %s\r\n", ErrorStr(err));
-        return result;
-    }
-    ChipLogProgress(Zcl, "Setup PIN code: %u (0x%x)\r\n", setupPINCode, setupPINCode);
-
-    uint16_t vendorId;
-    err = ConfigurationMgr().GetVendorId(vendorId);
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogProgress(Zcl, "Couldn't get vendorId: %s\r\n", ErrorStr(err));
-        return result;
-    }
-
-    uint16_t productId;
-    err = ConfigurationMgr().GetProductId(productId);
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogProgress(Zcl, "Couldn't get productId: %s\r\n", ErrorStr(err));
-        return result;
-    }
-    ChipLogProgress(Zcl, "Setup VendorId: %u (0x%x)\r\n", vendorId, vendorId);
-    ChipLogProgress(Zcl, "Setup ProductId: %u (0x%x)\r\n", productId, productId);
-    SetupPayload payload;
-    payload.version               = 0;
-    payload.discriminator         = discriminator;
-    payload.setUpPINCode          = setupPINCode;
-    payload.rendezvousInformation = RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE);
-    payload.vendorID              = vendorId;
-    payload.productID             = productId;
-
-    if (isRendezvousBLE())
-    {
-        QRCodeSetupPayloadGenerator generator(payload);
-        err = generator.payloadBase38Representation(result);
-    }
-
-    ManualSetupPayloadGenerator generator(payload);
-    std::string outCode;
-
-    if (generator.payloadDecimalStringRepresentation(outCode) == CHIP_NO_ERROR)
-    {
-        ChipLogProgress(Zcl, "Short Manual(decimal) setup code: %s\r\n", outCode.c_str());
-    }
-    else
-    {
-        ChipLogProgress(Zcl, "Failed to get decimal setup code\r\n");
-    }
-
-    payload.commissioningFlow = CommissioningFlow::kCustom;
-    generator                 = ManualSetupPayloadGenerator(payload);
-
-    if (generator.payloadDecimalStringRepresentation(outCode) == CHIP_NO_ERROR)
-    {
-        // intentional extra space here to align the log with the short code
-        ChipLogProgress(Zcl, "Long Manual(decimal) setup code:  %s\r\n", outCode.c_str());
-    }
-    else
-    {
-        ChipLogProgress(Zcl, "Failed to get decimal setup code\r\n");
-    }
-
-
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogProgress(Zcl, "Couldn't get payload string %\r\n" CHIP_ERROR_FORMAT, err.Format());
-    }
-    return result;
-};
 
 void OnIdentifyStart(Identify *)
 {
@@ -269,19 +182,8 @@ extern "C" void ChipTest(void)
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
     sWiFiNetworkCommissioningInstance.Init();
 
-    std::string qrCodeText = createSetupPayload();
+    PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
 
-    ChipLogProgress(Zcl, "QR CODE Text: '%s'\r\n", qrCodeText.c_str());
-
-    {
-        std::vector<char> qrCode(3 * qrCodeText.size() + 1);
-        err = EncodeQRCodeToUrl(qrCodeText.c_str(), qrCodeText.size(), qrCode.data(), qrCode.max_size());
-        if (err == CHIP_NO_ERROR)
-        {
-            ChipLogProgress(DeviceLayer, "Copy/paste the below URL in a browser to see the QR CODE:\t");
-            ChipLogProgress(DeviceLayer, "%s?data=%s \r\n",QRCODE_BASE_URL, qrCode.data());
-        }
-    }
     while (true)
         vTaskDelay(pdMS_TO_TICKS(50));
 }
