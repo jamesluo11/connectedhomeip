@@ -58,6 +58,7 @@ void LogV(const char * module, uint8_t category, const char * msg, va_list v)
         bk_printf("%s %s\r\n", tag, formattedMsg);
         break;
     case kLogCategory_Detail:
+    case kLogCategory_Automation:
         bk_printf("%s %s\r\n", tag, formattedMsg);
         break;
     }
