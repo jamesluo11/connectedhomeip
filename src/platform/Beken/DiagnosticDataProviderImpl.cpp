@@ -27,6 +27,9 @@
 #include <platform/Beken/DiagnosticDataProviderImpl.h>
 #include <platform/DiagnosticDataProvider.h>
 
+#include "wlan_ui_pub.h"
+#include "net.h"
+
 namespace chip {
 namespace DeviceLayer {
 
@@ -45,7 +48,6 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetCurrentHeapFree(uint64_t & currentHeap
 CHIP_ERROR DiagnosticDataProviderImpl::GetCurrentHeapUsed(uint64_t & currentHeapUsed)
 {
     currentHeapUsed = prvHeapGetTotalSize() - xPortGetFreeHeapSize();
-    ChipLogProgress(DeviceLayer, "beken-GetCurrentHeapUsed\n");
     return CHIP_NO_ERROR;
 }
 
@@ -119,52 +121,26 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetBootReason(uint8_t & bootReason)
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** netifpp)
 {
-#if 0
-    CHIP_ERROR err          = CHIP_ERROR_READ_FAILED;
-    NetworkInterface * head = NULL;
-    struct ifaddrs * ifaddr = nullptr;
+    NetworkInterface * ifp = new NetworkInterface();
+    struct netif *netif;
 
-    if (xnetif == NULL)
+    netif = ( struct netif*)net_get_sta_handle();//assume only on station mode
+    if(netif == NULL || ifp == NULL)
     {
-        ChipLogError(DeviceLayer, "Failed to get network interfaces");
-    }
-    else
-    {
-        for (struct netif * ifa = xnetif; ifa != NULL; ifa = ifa->next)
-        {
-            NetworkInterface * ifp = new NetworkInterface();
-
-            strncpy(ifp->Name, ifa->name, Inet::InterfaceId::kMaxIfNameLength);
-            ifp->Name[Inet::InterfaceId::kMaxIfNameLength - 1] = '\0';
-
-            ifp->name            = CharSpan(ifp->Name, strlen(ifp->Name));
-            ifp->fabricConnected = true;
-            if ((ifa->flags) & NETIF_FLAG_ETHERNET)
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ETHERNET;
-            else
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_WI_FI;
-            ifp->offPremiseServicesReachableIPv4 = false;
-            ifp->offPremiseServicesReachableIPv6 = false;
-
-            memcpy(ifp->MacAddress, ifa->hwaddr, sizeof(ifa->hwaddr));
-
-            if (0)
-            {
-                ChipLogError(DeviceLayer, "Failed to get network hardware address");
-            }
-            else
-            {
-                // Set 48-bit IEEE MAC Address
-                ifp->hardwareAddress = ByteSpan(ifp->MacAddress, 6);
-            }
-
-            ifp->Next = head;
-            head      = ifp;
-        }
+        ChipLogError(DeviceLayer, "Can't get the netif instance");
+        *netifpp = NULL;
+        return CHIP_ERROR_INTERNAL;
     }
 
-    *netifpp = head;
-#endif
+    strncpy(ifp->Name, netif->hostname, Inet::InterfaceId::kMaxIfNameLength);
+    ifp->Name[Inet::InterfaceId::kMaxIfNameLength - 1] = '\0';
+    ifp->name                                          = CharSpan::fromCharString(ifp->Name);
+    ifp->fabricConnected                               = true;
+    ifp->type                                          = EMBER_ZCL_INTERFACE_TYPE_WI_FI;
+    ifp->offPremiseServicesReachableIPv4.SetNonNull(false);
+    ifp->offPremiseServicesReachableIPv6.SetNonNull(false);
+    memcpy(ifp->MacAddress, netif->hwaddr, sizeof(netif->hwaddr));
+    *netifpp = ifp;
     return CHIP_NO_ERROR;
 }
 
@@ -181,126 +157,91 @@ void DiagnosticDataProviderImpl::ReleaseNetworkInterfaces(NetworkInterface * net
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiBssId(ByteSpan & BssId)
 {
-#if 0
-    CHIP_ERROR err = CHIP_ERROR_READ_FAILED;
-    static uint8_t ameba_bssid[6];
+    LinkStatusTypeDef linkStatus;
 
-    if (wifi_get_ap_bssid(ameba_bssid) == 0)
+    memset(&linkStatus, 0x0, sizeof(LinkStatusTypeDef));
+    if (0 == bk_wlan_get_link_status(&linkStatus))
     {
-        err = CHIP_NO_ERROR;
-        ChipLogProgress(DeviceLayer, "%02x,%02x,%02x,%02x,%02x,%02x\n", ameba_bssid[0], ameba_bssid[1], ameba_bssid[2],
-                        ameba_bssid[3], ameba_bssid[4], ameba_bssid[5]);
+        BssId = ByteSpan(linkStatus.bssid, 6);
     }
-
-    BssId = ameba_bssid;
-#endif
+    else
+    {
+        ChipLogError(DeviceLayer, "GetWiFiBssId Not Supported");
+        return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
+    }
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiVersion(uint8_t & wifiVersion)
 {
-    // Support 802.11a/n Wi-Fi in AmebaD chipset
+    // Support 802.11a/n Wi-Fi in Beken chipset
     wifiVersion = EMBER_ZCL_WI_FI_VERSION_TYPE_802__11N;
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiSecurityType(uint8_t & securityType)
 {
-#if 0
-    unsigned int _auth_type;
-    unsigned short _security = 0;
-    rtw_wifi_setting_t setting;
-
-#ifdef CONFIG_PLATFORM_8721D
-    if (wext_get_enc_ext("wlan0", &_security, &setting.key_idx, setting.password) < 0)
+    int cipher_type;
+    cipher_type = bk_sta_cipher_type();
+    switch(cipher_type)
     {
-        securityType = 0;
-    }
-    else
-    {
-        switch (_security)
-        {
-        case IW_ENCODE_ALG_NONE:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_NONE;
+        case BK_SECURITY_TYPE_NONE:
+            securityType = EMBER_ZCL_SECURITY_TYPE_NONE;
             break;
-        case IW_ENCODE_ALG_WEP:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_WEP;
+        case BK_SECURITY_TYPE_WEP :
+            securityType = EMBER_ZCL_SECURITY_TYPE_WEP;
             break;
-        case IW_ENCODE_ALG_TKIP:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA;
+        case BK_SECURITY_TYPE_WPA_TKIP:
+        case BK_SECURITY_TYPE_WPA_AES:
+            securityType = EMBER_ZCL_SECURITY_TYPE_WPA;
             break;
-        case IW_ENCODE_ALG_CCMP:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA2;
+        case BK_SECURITY_TYPE_WPA2_AES:
+        case BK_SECURITY_TYPE_WPA2_TKIP:
+        case BK_SECURITY_TYPE_WPA2_MIXED:
+            securityType = EMBER_ZCL_SECURITY_TYPE_WPA2;
             break;
+        case BK_SECURITY_TYPE_WPA3_SAE:
+        case BK_SECURITY_TYPE_WPA3_WPA2_MIXED:
+            securityType = EMBER_ZCL_SECURITY_TYPE_WPA3;
+            break;
+        case BK_SECURITY_TYPE_AUTO:
         default:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED;
-            break;
-        }
-        securityType = setting.security_type;
+            securityType = EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED;
     }
-#else
-    wext_get_enc_ext("wlan0", &_security, &setting.key_idx, setting.password);
-    if (wext_get_auth_type("wlan0", &_auth_type) < 0)
-    {
-        securityType = 0;
-    }
-    else
-    {
-        switch (_security)
-        {
-        case IW_ENCODE_ALG_NONE:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_NONE;
-            break;
-        case IW_ENCODE_ALG_WEP:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_WEP;
-            break;
-        case IW_ENCODE_ALG_TKIP:
-            if (_auth_type == WPA_SECURITY)
-                setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA;
-            else if (_auth_type == WPA2_SECURITY)
-                setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA2;
-            break;
-        case IW_ENCODE_ALG_CCMP:
-            if (_auth_type == WPA_SECURITY)
-                setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA;
-            else if (_auth_type == WPA2_SECURITY)
-                setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA2;
-            else if (_auth_type == WPA3_SECURITY)
-                setting.security_type = EMBER_ZCL_SECURITY_TYPE_WPA3;
-            break;
-        default:
-            setting.security_type = EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED;
-            break;
-        }
-        securityType = setting.security_type;
-    }
-#endif
-#endif
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiChannelNumber(uint16_t & channelNumber)
 {
-#if 0
-    unsigned char channel;
+    LinkStatusTypeDef linkStatus;
 
-    if (wext_get_channel("wlan0", &channel) < 0)
-        channelNumber = 0;
+    memset(&linkStatus, 0x0, sizeof(LinkStatusTypeDef));
+    if(0 == bk_wlan_get_link_status(&linkStatus))
+    {
+        channelNumber = linkStatus.channel;
+    }
     else
-        channelNumber = (uint16_t) channel;
-#endif
+    {
+        ChipLogError(DeviceLayer, "GetWiFiChannelNumber Not Supported");
+        return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
+    }
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiRssi(int8_t & rssi)
 {
-#if 0
-    int _rssi = 0;
-    if (wifi_get_rssi(&_rssi) < 0)
-        rssi = 0;
+    LinkStatusTypeDef linkStatus;
+
+    memset(&linkStatus, 0x0, sizeof(LinkStatusTypeDef));
+    if(0 == bk_wlan_get_link_status(&linkStatus))
+    {
+        rssi = linkStatus.wifi_strength;
+    }
     else
-        rssi = _rssi;
-#endif
+    {
+        ChipLogError(DeviceLayer, "GetWiFiRssi Not Supported");
+        return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
+    }
     return CHIP_NO_ERROR;
 }
 

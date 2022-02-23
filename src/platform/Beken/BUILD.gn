@@ -20,7 +20,7 @@ assert(chip_device_platform == "beken")
 
 static_library("Beken") {
   sources = [
-    "../FreeRTOS/SystemTimeSupport.cpp",
+    "SystemTimeSupport.cpp",
     "../SingletonConfigurationManager.cpp",
     "BekenConfig.cpp",
     "BekenConfig.h",
