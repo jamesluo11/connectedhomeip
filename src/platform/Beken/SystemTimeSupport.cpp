@@ -39,12 +39,12 @@ Clock::Milliseconds64 baseTime;
 
 Microseconds64 ClockImpl::GetMonotonicMicroseconds64(void)
 {
-    return (Clock::Microseconds64(xTaskGetTickCount()) * kMicrosecondsPerMillisecond);
+    return (Clock::Microseconds64(xTaskGetTickCount() << 1) * kMicrosecondsPerMillisecond);
 }
 
 Milliseconds64 ClockImpl::GetMonotonicMilliseconds64(void)
 {
-    return (Clock::Milliseconds64(xTaskGetTickCount()));
+    return (Clock::Milliseconds64(xTaskGetTickCount() << 1));
 }
 
 CHIP_ERROR ClockImpl::GetClock_RealTime(Clock::Microseconds64 & curTime)
