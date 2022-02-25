@@ -38,6 +38,8 @@ static_library("Beken") {
     "KeyValueStoreManagerImpl.h",
     "Logging.cpp",
     "LwIPCoreLock.cpp",
+    "OTAImageProcessorImpl.cpp",
+    "OTAImageProcessorImpl.h",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
     "SoftwareUpdateManagerImpl.h",

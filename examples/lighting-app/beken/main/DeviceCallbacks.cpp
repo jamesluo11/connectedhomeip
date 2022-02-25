@@ -120,6 +120,10 @@ void DeviceCallbacks::PostAttributeChangeCallback(EndpointId endpointId, Cluster
 {
     switch (clusterId)
     {
+    case ZCL_ON_OFF_CLUSTER_ID:
+        OnOnOffPostAttributeChangeCallback(endpointId, attributeId, value);
+        break;
+
     case ZCL_IDENTIFY_CLUSTER_ID:
         OnIdentifyPostAttributeChangeCallback(endpointId, attributeId, value);
         break;
@@ -128,6 +132,20 @@ void DeviceCallbacks::PostAttributeChangeCallback(EndpointId endpointId, Cluster
         ChipLogProgress(Zcl, "Unknown cluster ID: " ChipLogFormatMEI, ChipLogValueMEI(clusterId));
         break;
     }
+}
+
+void DeviceCallbacks::OnOnOffPostAttributeChangeCallback(EndpointId endpointId, AttributeId attributeId, uint8_t * value)
+{
+    VerifyOrExit(attributeId == ZCL_ON_OFF_ATTRIBUTE_ID,
+                 ChipLogError(DeviceLayer, TAG, "Unhandled Attribute ID: '0x%04x", attributeId));
+    VerifyOrExit(endpointId == 1 || endpointId == 2,
+                 ChipLogError(DeviceLayer, TAG, "Unexpected EndPoint ID: `0x%02x'", endpointId));
+
+    // At this point we can assume that value points to a bool value.
+   //statusLED1.Set(*value);
+
+exit:
+    return;
 }
 
 void IdentifyTimerHandler(Layer * systemLayer, void * appState)
@@ -158,4 +176,10 @@ void DeviceCallbacks::OnIdentifyPostAttributeChangeCallback(EndpointId endpointI
 
 exit:
     return;
+}
+
+bool emberAfBasicClusterMfgSpecificPingCallback(chip::app::CommandHandler * commandObj)
+{
+    emberAfSendDefaultResponse(emberAfCurrentCommand(), EMBER_ZCL_STATUS_SUCCESS);
+    return true;
 }
