@@ -33,15 +33,51 @@
 #include <setup_payload/ManualSetupPayloadGenerator.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
 
+//#if CONFIG_ENABLE_OTA_REQUESTOR
+#include "app/clusters/ota-requestor/BDXDownloader.h"
+#include "app/clusters/ota-requestor/OTARequestor.h"
+#include "platform/Beken/OTAImageProcessorImpl.h"
+#include "platform/GenericOTARequestorDriver.h"
+//#endif
+
+using chip::OTAImageProcessorImpl;
+using chip::BDXDownloader;
+using chip::ByteSpan;
+using chip::EndpointId;
+using chip::FabricIndex;
+using chip::GetRequestorInstance;
+using chip::NodeId;
+using chip::OnDeviceConnected;
+using chip::OnDeviceConnectionFailure;
+using chip::OTADownloader;
+using chip::OTAImageProcessorParams;
+using chip::OTARequestor;
+using chip::PeerId;
+using chip::Server;
+using chip::VendorId;
+using chip::Callback::Callback;
+using chip::System::Layer;
+using chip::Transport::PeerAddress;
+using namespace chip::Messaging;
+using namespace chip::app::Clusters::OtaSoftwareUpdateProvider::Commands;
+
+
 using namespace ::chip;
 using namespace ::chip::Credentials;
 using namespace ::chip::DeviceManager;
 using namespace ::chip::DeviceLayer;
+using namespace ::chip::System;
 
 //#define QRCODE_BASE_URL "https://dhrishi.github.io/connectedhomeip/qrcode.html"
 //#define EXAMPLE_VENDOR_TAG_IP 1
 
 static DeviceCallbacks EchoCallbacks;
+//#if CONFIG_ENABLE_OTA_REQUESTOR
+OTARequestor gRequestorCore;
+GenericOTARequestorDriver gRequestorUser;
+BDXDownloader gDownloader;
+OTAImageProcessorImpl gImageProcessor;
+//#endif
 
 namespace {
 app::Clusters::NetworkCommissioning::Instance
@@ -54,6 +90,113 @@ bool isRendezvousBLE()
     RendezvousInformationFlags flags = RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE);
     return flags.Has(RendezvousInformationFlag::kBLE);
 }
+
+//#if CONFIG_ENABLE_OTA_REQUESTOR
+extern "C" void QueryImageCmdHandler(uint32_t nodeId, uint32_t fabricId)
+{
+    ChipLogProgress(DeviceLayer, "Calling QueryImageCmdHandler");
+    // In this mode Provider node ID and fabric idx must be supplied explicitly from ATS$ cmd
+    gRequestorCore.TestModeSetProviderParameters(nodeId, fabricId, chip::kRootEndpointId);
+
+    static_cast<OTARequestor *>(GetRequestorInstance())->TriggerImmediateQuery();
+}
+
+extern "C" void ApplyUpdateCmdHandler()
+{
+    ChipLogProgress(DeviceLayer, "Calling ApplyUpdateCmdHandler");
+
+    static_cast<OTARequestor *>(GetRequestorInstance())->ApplyUpdate();
+}
+/*********************************************************************
+ * Funtion Name:BkQueryImageCmdHandler
+ *
+ * Funtion Discription:trigger ota requestor queries image from ota provider
+ *
+ * 
+ * Date:2022-02-22
+ *******************************************************************/
+extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
+{
+    uint32_t dwLoop = 0;
+    uint32_t nodeId = 0;
+    uint32_t fabricId = 0;
+
+    char cmd0 = 0;
+    char cmd1 = 0;
+
+    for(dwLoop = 0; dwLoop < argc; dwLoop++)
+    {
+        ChipLogProgress(DeviceLayer, "QueryImageArgument %d = %s\r\n", dwLoop + 1, argv[dwLoop]);
+    }
+
+    if(argc == 3)
+    {
+        cmd0 = argv[1][0] - 0x30;
+        cmd1 = argv[1][1] - 0x30;
+        nodeId = (uint32_t)(cmd0 * 10 + cmd1);
+        
+        cmd0 = argv[2][0] - 0x30;
+        cmd1 = argv[2][1] - 0x30;
+        fabricId = (uint32_t)(cmd0 * 10 + cmd1);
+        ChipLogProgress(DeviceLayer, "nodeId %lu,fabricId %lu\r\n", nodeId,fabricId);
+    }
+    else
+    {
+        ChipLogProgress(DeviceLayer,"cmd param error ");
+        return ;
+    }
+
+    QueryImageCmdHandler( nodeId,  fabricId);
+    ChipLogProgress(DeviceLayer,"QueryImageCmdHandler begin");
+
+    return ;
+}
+
+/*********************************************************************
+ * Funtion Name:BkApplyUpdateCmdHandler
+ *
+ * Funtion Discription:trigger ota requestor queries image from ota provider
+ *
+ * 
+ * Date:2022-02-22
+ *******************************************************************/
+extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
+{
+    ApplyUpdateCmdHandler();
+    ChipLogProgress(DeviceLayer,"ApplyUpdateCmdHandler send requst");
+
+    return ;
+}
+
+
+static void InitOTARequestor(void)
+{
+    // Initialize and interconnect the Requestor and Image Processor objects -- START
+    SetRequestorInstance(&gRequestorCore);
+
+    // Set server instance used for session establishment
+    /*  - Set server instance used to get access to the system resources necessary to open CASE sessions and drive
+    *   - BDX transfers
+    *   - Set the OTA requestor driver instance used to communicate download progress and errors
+    *   - Set the BDX downloader instance used for initiating BDX downloads
+    */
+    gRequestorCore.Init(&(chip::Server::GetInstance()), &gRequestorUser, &gDownloader);
+
+    // WARNING: this is probably not realistic to know such details of the image or to even have an OTADownloader instantiated at
+    // the beginning of program execution. We're using hardcoded values here for now since this is a reference application.
+    // TODO: instatiate and initialize these values when QueryImageResponse tells us an image is available
+    // TODO: add API for OTARequestor to pass QueryImageResponse info to the application to use for OTADownloader init
+    OTAImageProcessorParams ipParams;
+    gImageProcessor.SetOTAImageProcessorParams(ipParams);
+    gImageProcessor.SetOTADownloader(&gDownloader);
+
+    // Connect the Downloader and Image Processor objects
+    gDownloader.SetImageProcessorDelegate(&gImageProcessor);
+    gRequestorUser.Init(&gRequestorCore, &gImageProcessor);
+
+    // Initialize and interconnect the Requestor and Image Processor objects -- END
+}
+//#endif // CONFIG_ENABLE_OTA_REQUESTOR
 
 void OnIdentifyStart(Identify *)
 {
@@ -184,8 +327,14 @@ extern "C" void ChipTest(void)
 
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
 
+//#if CONFIG_ENABLE_OTA_REQUESTOR
+    InitOTARequestor();
+//#endif
     while (true)
         vTaskDelay(pdMS_TO_TICKS(50));
+exit:
+    ChipLogProgress(SoftwareUpdate, "Exited");
+	return;
 }
 
 bool lowPowerClusterSleep()
