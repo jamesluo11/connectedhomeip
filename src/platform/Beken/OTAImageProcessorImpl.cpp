@@ -23,6 +23,7 @@
 #include "wlan_ui_pub.h"
 #include "BkDriverFlash.h"
 #include "flash_namespace_value.h"
+#include "mem_pub.h"
 
 
 namespace chip {
@@ -93,7 +94,6 @@ void OTAImageProcessorImpl::HandlePrepareDownload(intptr_t context)
         return;
     }
 
-    // Get OTA update partition
     ChipLogProgress(SoftwareUpdate, "%s [%d] OTA address space will be upgraded",__FUNCTION__,__LINE__);
 
     imageProcessor->mDownloader->OnPreparedForDownload(CHIP_NO_ERROR);
@@ -116,27 +116,6 @@ void OTAImageProcessorImpl::HandleFinalize(intptr_t context)
     
     bk_write_ota_data_to_flash((char *)ucFinishFlag,dwFlagAddrOffset,(sizeof(ucFinishFlag) - 1));
 
-    // need to add Verify checksum code in the future
-    #if 0
-    if (imageProcessor == nullptr)
-    {
-        ChipLogError(SoftwareUpdate, "ImageProcessor context is null");
-        return;
-    }
-    esp_err_t err = esp_ota_end(imageProcessor->mOTAUpdateHandle);
-    if (err != ESP_OK)
-    {
-        if (err == ESP_ERR_OTA_VALIDATE_FAILED)
-        {
-            ESP_LOGE(TAG, "Image validation failed, image is corrupted");
-        }
-        else
-        {
-            ESP_LOGE(TAG, "esp_ota_end failed (%s)!", esp_err_to_name(err));
-        }
-        return;
-    }
-    #endif 
     imageProcessor->ReleaseBlock();
 
     ChipLogProgress(SoftwareUpdate, "OTA image downloaded and written to flash");
@@ -160,7 +139,6 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 {
     auto * imageProcessor = reinterpret_cast<OTAImageProcessorImpl *>(context);
     
-    ChipLogError(SoftwareUpdate, "BBBBRRRRWWWW %s [%d] ",__FUNCTION__,__LINE__);
     if (imageProcessor == nullptr)
     {
         ChipLogError(SoftwareUpdate, "ImageProcessor context is null");
@@ -171,24 +149,23 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         ChipLogError(SoftwareUpdate, "mDownloader is null");
         return;
     }
-    ChipLogError(SoftwareUpdate, "BBBBRRRRWWWW %s [%d] ",__FUNCTION__,__LINE__);
 
     if (!imageProcessor->readHeader) // First block received, process header
     {
-        ChipLogError(SoftwareUpdate, "BBBBRRRRWWWW %s [%d] ",__FUNCTION__,__LINE__);
-        ota_data_struct_t * tempBuf = (ota_data_struct_t *) malloc(sizeof(ota_data_struct_t));
+        ota_data_struct_t * tempBuf = (ota_data_struct_t *) os_malloc(sizeof(ota_data_struct_t));
         
         if(NULL == tempBuf)
         {
             ChipLogError(SoftwareUpdate, "%s [%d] malloc failed  ",__FUNCTION__,__LINE__);
         }
-        memset((char *)tempBuf,0,sizeof(ota_data_struct_t));
-        memcpy((char *)&(imageProcessor->pOtaTgtHdr), imageProcessor->mBlock.data(), sizeof(ota_data_struct_t));
+        os_memset((char *)tempBuf,0,sizeof(ota_data_struct_t));
+        os_memcpy((char *)&(imageProcessor->pOtaTgtHdr), imageProcessor->mBlock.data(), sizeof(ota_data_struct_t));
 
         imageProcessor->flash_data_offset = 0;
 
         bk_read_ota_data_in_flash( (char *)tempBuf,imageProcessor->flash_data_offset,sizeof(ota_data_struct_t));
-        ChipLogProgress(SoftwareUpdate, "tempBuf version %s,date is %ld ",tempBuf->version,tempBuf->timestamp);
+        ChipLogProgress(SoftwareUpdate, "Download version %s,date is %ld ",tempBuf->version,tempBuf->timestamp);
+        ChipLogProgress(SoftwareUpdate, "Download size_raw %ld,size_package is %ld ",tempBuf->size_raw,tempBuf->size_package);
         ChipLogProgress(SoftwareUpdate, "imageProcessor version %s,date is 0x%lx ",imageProcessor->pOtaTgtHdr.version,imageProcessor->pOtaTgtHdr.timestamp);
 
         bk_logic_partition_t *partition_info = NULL;
@@ -205,7 +182,7 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         if ((0 == memcmp(ucflag,ucFinishFlag,(sizeof(ucFinishFlag) - 1))) && 
             (0 == memcmp(tempBuf->version,imageProcessor->pOtaTgtHdr.version,sizeof(imageProcessor->pOtaTgtHdr.version))))
         {
-            free(tempBuf);
+            os_free(tempBuf);
             tempBuf = NULL;
             ChipLogError(SoftwareUpdate, "The version is is the same as the previous version");
             return;
@@ -213,7 +190,6 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 
         imageProcessor->readHeader = true;
         ChipLogProgress(SoftwareUpdate, "flash_data_offset is 0x%lx",imageProcessor->flash_data_offset);
-        ChipLogError(SoftwareUpdate, "BBBBRRRRWWWW %s [%d] ",__FUNCTION__,__LINE__);
 
         // Erase update partition
         ChipLogProgress(SoftwareUpdate, "Erasing target partition...");
@@ -221,21 +197,19 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         ChipLogProgress(SoftwareUpdate, "Erasing target partition...");
         if(0 != bk_write_ota_data_to_flash((char *) imageProcessor->mBlock.data(),imageProcessor->flash_data_offset,imageProcessor->mBlock.size()))
         {
-            free(tempBuf);
+            os_free(tempBuf);
             tempBuf = NULL;
             ChipLogError(SoftwareUpdate, "bk_write_ota_data_to_flash failed %s [%d] ",__FUNCTION__,__LINE__);
             imageProcessor->mDownloader->EndDownload(CHIP_ERROR_WRITE_FAILED);
             return;
         }
-        ChipLogError(SoftwareUpdate, "BBBBRRRRWWWW %s [%d] ",__FUNCTION__,__LINE__);
         imageProcessor->flash_data_offset += imageProcessor->mBlock.size();//count next write flash address
 
-        free(tempBuf);
+        os_free(tempBuf);
         tempBuf = NULL;
     }
     else // received subsequent blocks
     {
-        ChipLogError(SoftwareUpdate, "BBBBRRRRWWWW %s [%d] 0x%lx %d",__FUNCTION__,__LINE__,imageProcessor->flash_data_offset,imageProcessor->mBlock.size());
         if(0 != bk_write_ota_data_to_flash( (char *)imageProcessor->mBlock.data(),imageProcessor->flash_data_offset,imageProcessor->mBlock.size()))
         {
             ChipLogError(SoftwareUpdate, "bk_write_ota_data_to_flash failed %s [%d] ",__FUNCTION__,__LINE__);
@@ -248,7 +222,6 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
     }
 
     imageProcessor->mParams.downloadedBytes += imageProcessor->mBlock.size();
-    ChipLogError(SoftwareUpdate, "BBBB %s [%d],downloadedBytes is %lld FetchNextData",__FUNCTION__,__LINE__,imageProcessor->mParams.downloadedBytes);
     imageProcessor->mDownloader->FetchNextData();
 }
 

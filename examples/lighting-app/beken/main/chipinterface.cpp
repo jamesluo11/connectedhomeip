@@ -52,8 +52,6 @@ using chip::OnDeviceConnectionFailure;
 using chip::OTADownloader;
 using chip::OTAImageProcessorParams;
 using chip::OTARequestor;
-using chip::PeerId;
-using chip::Server;
 using chip::VendorId;
 using chip::Callback::Callback;
 using chip::System::Layer;
@@ -68,8 +66,6 @@ using namespace ::chip::DeviceManager;
 using namespace ::chip::DeviceLayer;
 using namespace ::chip::System;
 
-//#define QRCODE_BASE_URL "https://dhrishi.github.io/connectedhomeip/qrcode.html"
-//#define EXAMPLE_VENDOR_TAG_IP 1
 
 static DeviceCallbacks EchoCallbacks;
 //#if CONFIG_ENABLE_OTA_REQUESTOR
@@ -167,7 +163,6 @@ extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen
 
     return ;
 }
-
 
 static void InitOTARequestor(void)
 {
