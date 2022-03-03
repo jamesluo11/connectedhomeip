@@ -135,7 +135,6 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
     strncpy(ifp->Name, netif->hostname, Inet::InterfaceId::kMaxIfNameLength);
     ifp->Name[Inet::InterfaceId::kMaxIfNameLength - 1] = '\0';
     ifp->name                                          = CharSpan::fromCharString(ifp->Name);
-    ifp->fabricConnected                               = true;
     ifp->type                                          = EMBER_ZCL_INTERFACE_TYPE_WI_FI;
     ifp->offPremiseServicesReachableIPv4.SetNonNull(false);
     ifp->offPremiseServicesReachableIPv6.SetNonNull(false);
