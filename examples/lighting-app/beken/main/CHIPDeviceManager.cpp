@@ -77,11 +77,11 @@ CHIP_ERROR CHIPDeviceManager::Init(CHIPDeviceManagerCallbacks * cb)
     err = PlatformMgr().StartEventLoopTask();
     if (err != CHIP_NO_ERROR)
     {
-        printf("StartEventLoopTask() - ERROR!\r\n");
+        ChipLogProgress(Zcl, "StartEventLoopTask() - ERROR!\r\n");
     }
     else
     {
-        printf("StartEventLoopTask() - OK\r\n");
+        ChipLogProgress(Zcl, "StartEventLoopTask() - OK\r\n");
     }
 
 exit:

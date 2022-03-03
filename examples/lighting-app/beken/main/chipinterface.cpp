@@ -66,16 +66,14 @@ using namespace ::chip::DeviceManager;
 using namespace ::chip::DeviceLayer;
 using namespace ::chip::System;
 
+namespace {
 
 static DeviceCallbacks EchoCallbacks;
-//#if CONFIG_ENABLE_OTA_REQUESTOR
 OTARequestor gRequestorCore;
 GenericOTARequestorDriver gRequestorUser;
 BDXDownloader gDownloader;
 OTAImageProcessorImpl gImageProcessor;
-//#endif
 
-namespace {
 app::Clusters::NetworkCommissioning::Instance
     sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::BekenWiFiDriver::GetInstance()));
 } // namespace
@@ -88,12 +86,9 @@ bool isRendezvousBLE()
 }
 
 //#if CONFIG_ENABLE_OTA_REQUESTOR
-extern "C" void QueryImageCmdHandler(uint32_t nodeId, uint32_t fabricId)
+extern "C" void QueryImageCmdHandler()
 {
     ChipLogProgress(DeviceLayer, "Calling QueryImageCmdHandler");
-    // In this mode Provider node ID and fabric idx must be supplied explicitly from ATS$ cmd
-    gRequestorCore.TestModeSetProviderParameters(nodeId, fabricId, chip::kRootEndpointId);
-
     static_cast<OTARequestor *>(GetRequestorInstance())->TriggerImmediateQuery();
 }
 
@@ -113,6 +108,7 @@ extern "C" void ApplyUpdateCmdHandler()
  *******************************************************************/
 extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
+#if 0
     uint32_t dwLoop = 0;
     uint32_t nodeId = 0;
     uint32_t fabricId = 0;
@@ -141,8 +137,8 @@ extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen,
         ChipLogProgress(DeviceLayer,"cmd param error ");
         return ;
     }
-
-    QueryImageCmdHandler( nodeId,  fabricId);
+#endif
+    QueryImageCmdHandler();
     ChipLogProgress(DeviceLayer,"QueryImageCmdHandler begin");
 
     return ;
@@ -299,6 +295,17 @@ extern "C" bool __sync_bool_compare_and_swap_4(volatile void* ptr, unsigned int 
 extern "C" void _fini(void) { }
 extern "C" void _init(void) {;}
 
+static void InitServer(intptr_t context)
+{
+    // Init ZCL Data Model and CHIP App Server
+    chip::Server::GetInstance().Init();
+
+    // Initialize device attestation config
+    SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
+    sWiFiNetworkCommissioningInstance.Init();
+    PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
+}
+
 extern "C" void ChipTest(void)
 {
     ChipLogProgress(Zcl, "ChipTest");
@@ -315,19 +322,10 @@ extern "C" void ChipTest(void)
     {
         ChipLogProgress(Zcl, "DeviceManagerInit() - OK");
     }
-    chip::Server::GetInstance().Init();
-    // Initialize device attestation config
-    SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
-    sWiFiNetworkCommissioningInstance.Init();
-
-    PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
-
-//#if CONFIG_ENABLE_OTA_REQUESTOR
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(InitServer, reinterpret_cast<intptr_t>(nullptr));
     InitOTARequestor();
-//#endif
     while (true)
-        vTaskDelay(pdMS_TO_TICKS(50));
-exit:
+        vTaskDelay(pdMS_TO_TICKS(50)); //Just server the application event handler
     ChipLogProgress(SoftwareUpdate, "Exited");
 	return;
 }
