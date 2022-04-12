@@ -387,11 +387,27 @@ CHIP_ERROR PacketBuffer::Read(uint8_t * aDestination, size_t aReadLength) const
 bool PacketBuffer::EnsureReservedSize(uint16_t aReservedSize)
 {
     const uint16_t kCurrentReservedSize = this->ReservedSize();
+    uint32_t dwReturn = 0;
+    uint32_t dwAllocsize = 0;
+
     if (aReservedSize <= kCurrentReservedSize)
         return true;
+    //The original Matter codes
+    //if ((aReservedSize + this->len) > this->AllocSize())
 
-    if ((aReservedSize + this->len) > this->AllocSize())
+    /*============= Modify by Beken Corporation============*/
+    /*========================START========================*/
+    dwReturn = pbuf_length_get (this, &dwAllocsize);
+    ChipLogError(chipSystemLayer, "The pbuf type is wrong");
+
+    if ((aReservedSize + this->len) > dwAllocsize)
+    {
+        ChipLogError(chipSystemLayer, "The pbuf space is not adequte");
         return false;
+    }
+    /*============= Modify by Beken Corporation============*/
+    /*========================END========================*/
+
 
     // Cast is safe because aReservedSize > kCurrentReservedSize.
     const uint16_t kMoveLength = static_cast<uint16_t>(aReservedSize - kCurrentReservedSize);

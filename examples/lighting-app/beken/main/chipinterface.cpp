@@ -98,6 +98,14 @@ extern "C" void ApplyUpdateCmdHandler()
 
     static_cast<OTARequestor *>(GetRequestorInstance())->ApplyUpdate();
 }
+
+extern "C" void NotifyUpdateAppliedHandler(uint32_t version)
+{
+    ChipLogProgress(DeviceLayer, "NotifyUpdateApplied");
+    
+    static_cast<OTARequestor *>(GetRequestorInstance())->NotifyUpdateApplied(version);
+}
+
 /*********************************************************************
  * Funtion Name:BkQueryImageCmdHandler
  *
@@ -155,7 +163,48 @@ extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen,
 extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
     ApplyUpdateCmdHandler();
-    ChipLogProgress(DeviceLayer,"ApplyUpdateCmdHandler send requst");
+    ChipLogProgress(DeviceLayer,"ApplyUpdateCmdHandler send request");
+
+    return ;
+}
+
+/*********************************************************************
+ * Funtion Name:BkNotifyUpdateApplied
+ *
+ * Funtion Discription:trigger ota requestor notify update applied to ota provider
+ *
+ * 
+ * Date:2022-03-10
+ *******************************************************************/
+extern "C" void BkNotifyUpdateApplied(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
+{
+    uint32_t dwLoop = 0;
+    uint32_t version = 0;
+
+    char cmd0 = 0;
+    char cmd1 = 0;
+
+    for(dwLoop = 0; dwLoop < argc; dwLoop++)
+    {
+        ChipLogProgress(DeviceLayer, "NotifyUpdateApplied %d = %s\r\n", dwLoop + 1, argv[dwLoop]);
+    }
+
+    if(argc == 2)
+    {
+        cmd0 = argv[1][0] - 0x30;
+        cmd1 = argv[1][1] - 0x30;
+        version = (uint32_t)(cmd0 * 10 + cmd1);
+        
+        ChipLogProgress(DeviceLayer, "version %lu \r\n", version);
+    }
+    else
+    {
+        ChipLogProgress(DeviceLayer,"cmd param error ");
+        return ;
+    }
+
+    NotifyUpdateAppliedHandler( version);
+    ChipLogProgress(DeviceLayer,"NotifyUpdateApplied send request");
 
     return ;
 }
@@ -164,6 +213,7 @@ static void InitOTARequestor(void)
 {
     // Initialize and interconnect the Requestor and Image Processor objects -- START
     SetRequestorInstance(&gRequestorCore);
+    ChipLogProgress(DeviceLayer,"InitOTARequestor gRequestorCore init");
 
     // Set server instance used for session establishment
     /*  - Set server instance used to get access to the system resources necessary to open CASE sessions and drive
