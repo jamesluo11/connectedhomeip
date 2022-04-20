@@ -17,6 +17,9 @@
 
 #pragma once
 #include <platform/NetworkCommissioning.h>
+#include "wlan_ui_pub.h"
+
+#define NC_SECURITYCONVERT(security)     ((security < 3) ? security : (security == 3) ? 2 : (security < 7) ? 3 : 4 )
 
 namespace chip {
 namespace DeviceLayer {
@@ -27,6 +30,37 @@ constexpr uint8_t kMaxWiFiNetworks                  = 1;
 constexpr uint8_t kWiFiScanNetworksTimeOutSeconds   = 10;
 constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 20;
 } // namespace
+
+class BKScanResponseIterator : public Iterator<WiFiScanResponse>
+{
+public:
+    BKScanResponseIterator(const size_t size, const ScanResult_adv * scanResults) : mSize(size), mpScanResults(scanResults) {}
+    size_t Count() override { return mSize; }
+    bool Next(WiFiScanResponse & item) override
+    {
+        if (mIternum >= mSize)
+        {
+            return false;
+        }
+        uint8_t ssidlenth = strlen(mpScanResults->ApList[mIternum].ssid);
+        item.security = NC_SECURITYCONVERT(mpScanResults->ApList[mIternum].security);
+        item.ssidLen = ssidlenth;
+        item.channel  = mpScanResults->ApList[mIternum].channel;
+        item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
+        item.rssi     = mpScanResults->ApList[mIternum].ApPower;
+        memcpy(item.ssid, mpScanResults->ApList[mIternum].ssid, ssidlenth);
+        memcpy(item.bssid, mpScanResults->ApList[mIternum].bssid, 6);
+
+        mIternum++;
+        return true;
+    }
+    void Release() override {}
+
+private:
+    const size_t mSize;
+    const ScanResult_adv * mpScanResults;
+    size_t mIternum = 0;
+};
 
 class BekenWiFiDriver final : public WiFiDriver
 {
