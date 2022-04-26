@@ -29,6 +29,8 @@
 
 #include <lib/support/CHIPMem.h>
 #include <lib/support/CodeUtils.h>
+#include "FreeRTOS.h"
+#include "semphr.h"
 
 namespace chip {
 
@@ -54,12 +56,43 @@ template <class Subclass, class Deletor = DeleteDeletor<Subclass>, int kInitRefC
 class ReferenceCounted
 {
 public:
+    using count_type = uint32_t;
+
+    //=============Add by Beken Corporation Start====================//
+    ReferenceCounted()
+    {
+        mRefCountMutex = xSemaphoreCreateMutex();
+        
+        if (mRefCountMutex == NULL)
+        {
+            os_printf("Failed to create CHIP mRefCountMutex \r\n");
+        }
+    }
+    
+    ~ReferenceCounted()
+    {
+        vSemaphoreDelete(mRefCountMutex);
+    }
+    
+    void LockMrefcountChipStack()
+    {
+        xSemaphoreTake(mRefCountMutex, portMAX_DELAY);
+    }
+    
+    void UnlockMrefcountChipStack()
+    {
+        xSemaphoreGive(mRefCountMutex);
+    }
+    //=============Add by Beken Corporation End====================//
+    
     /** Adds one to the usage count of this class */
+    
     Subclass * Retain()
     {
-        VerifyOrDie(!kInitRefCount || mRefCount > 0);
-        VerifyOrDie(mRefCount < std::numeric_limits<CounterType>::max());
-        ++mRefCount;
+        VerifyOrDie(!kInitRefCount || GetReferenceCount() > 0);//Modified by Beken Corporation 
+        VerifyOrDie(GetReferenceCount() < std::numeric_limits<count_type>::max());
+        //++mRefCount;
+        IncrementReferenceCount();//Modified by Beken Corporation 
 
         return static_cast<Subclass *>(this);
     }
@@ -67,19 +100,43 @@ public:
     /** Release usage of this class */
     void Release()
     {
-        VerifyOrDie(mRefCount != 0);
-
-        if (--mRefCount == 0)
+        VerifyOrDie(GetReferenceCount() != 0);
+        //if (--mRefCount == 0)
+        if (DecrementReferenceCount() == 0)//Modified by Beken Corporation 
         {
             Deletor::Release(static_cast<Subclass *>(this));
         }
     }
 
     /** Get the current reference counter value */
-    CounterType GetReferenceCount() const { return mRefCount; }
+    //Modified by Beken Corporation 
+    count_type GetReferenceCount()  { 
+    count_type RefCount;
+        LockMrefcountChipStack();
+        RefCount = mRefCount;
+        UnlockMrefcountChipStack();
+        return RefCount; 
+    }
+    //=============Add by Beken Corporation Start====================//
+    void IncrementReferenceCount() 
+    {   
+        LockMrefcountChipStack();
+        ++mRefCount;
+        UnlockMrefcountChipStack();
+    }
+        
+    count_type DecrementReferenceCount() 
+    {   
+        LockMrefcountChipStack();
+        --mRefCount;
+        UnlockMrefcountChipStack();
+        return mRefCount;
+    }
+    //=============Add by Beken Corporation End====================//
 
 private:
-    CounterType mRefCount = kInitRefCount;
+    count_type mRefCount = kInitRefCount;
+    SemaphoreHandle_t mRefCountMutex;//Add by Beken Corporation Start
 };
 
 } // namespace chip
