@@ -65,7 +65,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
     }
     else
     {
-        err = CHIP_ERROR_INTERNAL;
+        err = CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND;
     }
 
     return err;
@@ -99,19 +99,10 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
 {
     uint32_t ret    = 0;
     CHIP_ERROR err = CHIP_NO_ERROR;
-    
-    ret = bk_clean_data (GetKVNameSpaceName(key), key);
-    
-    if (kNoErr == ret)
-    {
-        err = CHIP_NO_ERROR;
-    }
-    else
-    {
-        err = CHIP_ERROR_INTERNAL;
-    }
 
-    return err;
+    bk_clean_data (GetKVNameSpaceName(key), key);
+
+    return CHIP_NO_ERROR;
 }
 
 const char* KeyValueStoreManagerImpl::GetKVNameSpaceName(const char *key)

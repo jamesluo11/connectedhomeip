@@ -34,12 +34,12 @@ namespace NetworkCommissioning {
 namespace {
 constexpr char kWiFiSSIDKeyName[]        = "wifi-ssid";
 constexpr char kWiFiCredentialsKeyName[] = "wifi-pass";
-static uint8_t WiFiSSIDStr[DeviceLayer::Internal::kMaxWiFiSSIDLength];
+
 } // namespace
 
 
 
-CHIP_ERROR BekenWiFiDriver::Init()
+CHIP_ERROR BekenWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::Init\r\n");
     CHIP_ERROR err;
@@ -64,11 +64,13 @@ CHIP_ERROR BekenWiFiDriver::Init()
     mStagingNetwork   = mSavedNetwork;
     mpScanCallback    = nullptr;
     mpConnectCallback = nullptr;
+    mpStatusChangeCallback = networkStatusChangeCallback;
     return err;
 }
 
 CHIP_ERROR BekenWiFiDriver::Shutdown()
 {
+    mpStatusChangeCallback = nullptr;
     return CHIP_NO_ERROR;
 }
 
@@ -95,9 +97,13 @@ bool BekenWiFiDriver::NetworkMatch(const WiFiNetwork & network, ByteSpan network
     return networkId.size() == network.ssidLen && memcmp(networkId.data(), network.ssid, network.ssidLen) == 0;
 }
 
-Status BekenWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials)
+Status BekenWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials, MutableCharSpan & outDebugText,
+                                         uint8_t & outNetworkIndex)
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::AddOrUpdateNetwork\r\n");
+
+    outDebugText.reduce_size(0);
+    outNetworkIndex = 0;
     VerifyOrReturnError(mStagingNetwork.ssidLen == 0 || NetworkMatch(mStagingNetwork, ssid), Status::kBoundsExceeded);
     VerifyOrReturnError(credentials.size() <= sizeof(mStagingNetwork.credentials), Status::kOutOfRange);
     VerifyOrReturnError(ssid.size() <= sizeof(mStagingNetwork.ssid), Status::kOutOfRange);
@@ -111,9 +117,12 @@ Status BekenWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials)
     return Status::kSuccess;
 }
 
-Status BekenWiFiDriver::RemoveNetwork(ByteSpan networkId)
+Status BekenWiFiDriver::RemoveNetwork(ByteSpan networkId, MutableCharSpan & outDebugText, uint8_t & outNetworkIndex)
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::RemoveNetwork\r\n");
+
+    outDebugText.reduce_size(0);
+    outNetworkIndex = 0;
     VerifyOrReturnError(NetworkMatch(mStagingNetwork, networkId), Status::kNetworkIDNotFound);
 
     // Use empty ssid for representing invalid network
@@ -121,10 +130,11 @@ Status BekenWiFiDriver::RemoveNetwork(ByteSpan networkId)
     return Status::kSuccess;
 }
 
-Status BekenWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index)
+Status BekenWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, MutableCharSpan & outDebugText)
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::ReorderNetwork\r\n");
     // Only one network is supported now
+    outDebugText.reduce_size(0);
     VerifyOrReturnError(index == 0, Status::kOutOfRange);
     VerifyOrReturnError(NetworkMatch(mStagingNetwork, networkId), Status::kNetworkIDNotFound);
     return Status::kSuccess;
@@ -181,6 +191,49 @@ exit:
         mpConnectCallback = nullptr;
         callback->OnResult(networkingStatus, CharSpan(), 0);
     }
+}
+
+CHIP_ERROR GetConnectedNetwork(Network & network)
+{
+    ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::GetConnectedNetwork\r\n");
+    LinkStatusTypeDef wifi_setting={0};
+    bk_wlan_get_link_status(&wifi_setting);
+    uint8_t length = strnlen(reinterpret_cast<const char *>(wifi_setting.ssid), DeviceLayer::Internal::kMaxWiFiSSIDLength);
+    memcpy(network.networkID, wifi_setting.ssid, length);
+    ChipLogProgress(NetworkProvisioning, "networkID:[%s][%d]\r\n",network.networkID,length);
+    network.networkIDLen = sizeof(network.networkID);
+    return CHIP_NO_ERROR;
+}
+
+void BekenWiFiDriver::OnNetworkStatusChange()
+{
+    Network configuredNetwork = {0};
+
+    VerifyOrReturn(mpStatusChangeCallback != nullptr);
+    GetConnectedNetwork(configuredNetwork);
+    
+    if (configuredNetwork.networkID[0])
+    {
+        mpStatusChangeCallback->OnNetworkingStatusChange(
+            Status::kSuccess, MakeOptional(ByteSpan(configuredNetwork.networkID, configuredNetwork.networkIDLen)), NullOptional);
+        return;
+    }
+    mpStatusChangeCallback->OnNetworkingStatusChange(
+        Status::kUnknownError, MakeOptional(ByteSpan(configuredNetwork.networkID, configuredNetwork.networkIDLen)),
+        MakeOptional(GetLastDisconnectReason()));
+}
+
+CHIP_ERROR BekenWiFiDriver::SetLastDisconnectReason(const ChipDeviceEvent * event)
+{
+    //VerifyOrReturnError(event->Type == DeviceEventType::kRtkWiFiStationDisconnectedEvent, CHIP_ERROR_INVALID_ARGUMENT);
+    //mLastDisconnectedReason = wifi_get_last_error();
+    //TODO
+    return CHIP_NO_ERROR;
+}
+
+int32_t BekenWiFiDriver::GetLastDisconnectReason()
+{
+    return mLastDisconnectedReason;
 }
 
 CHIP_ERROR BekenWiFiDriver::StartScanWiFiNetworks(ByteSpan ssid)
@@ -250,18 +303,6 @@ void BekenWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * cal
             callback->OnFinished(Status::kUnknownError, CharSpan(), nullptr);
         }
     }
-}
-
-CHIP_ERROR GetConnectedNetwork(Network & network)
-{
-    ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::GetConnectedNetwork\r\n");
-    LinkStatusTypeDef wifi_setting={0};
-    bk_wlan_get_link_status(&wifi_setting);
-    uint8_t length = strnlen(reinterpret_cast<const char *>(wifi_setting.ssid), DeviceLayer::Internal::kMaxWiFiSSIDLength);
-    memcpy(network.networkID, wifi_setting.ssid, length);
-    ChipLogProgress(NetworkProvisioning, "networkID:[%s][%d]\r\n",network.networkID,length);
-    network.networkIDLen = sizeof(network.networkID);
-    return CHIP_NO_ERROR;
 }
 
 size_t BekenWiFiDriver::WiFiNetworkIterator::Count()
