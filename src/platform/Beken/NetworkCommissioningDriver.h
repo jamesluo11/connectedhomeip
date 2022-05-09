@@ -43,7 +43,7 @@ public:
             return false;
         }
         uint8_t ssidlenth = strlen(mpScanResults->ApList[mIternum].ssid);
-        item.security = NC_SECURITYCONVERT(mpScanResults->ApList[mIternum].security);
+        item.security.SetRaw(NC_SECURITYCONVERT(mpScanResults->ApList[mIternum].security));
         item.ssidLen = ssidlenth;
         item.channel  = mpScanResults->ApList[mIternum].channel;
         item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
@@ -91,7 +91,7 @@ public:
 
     // BaseDriver
     NetworkIterator * GetNetworks() override { return new WiFiNetworkIterator(this); }
-    CHIP_ERROR Init() override;
+    CHIP_ERROR Init(NetworkStatusChangeCallback * networkStatusChangeCallback) override;
     CHIP_ERROR Shutdown() override;
 
     // WirelessDriver
@@ -102,17 +102,23 @@ public:
     CHIP_ERROR CommitConfiguration() override;
     CHIP_ERROR RevertConfiguration() override;
 
-    Status RemoveNetwork(ByteSpan networkId) override;
-    Status ReorderNetwork(ByteSpan networkId, uint8_t index) override;
+    Status RemoveNetwork(ByteSpan networkId, MutableCharSpan & outDebugText, uint8_t & outNetworkIndex) override;
+    Status ReorderNetwork(ByteSpan networkId, uint8_t index, MutableCharSpan & outDebugText) override;
     void ConnectNetwork(ByteSpan networkId, ConnectCallback * callback) override;
 
     // WiFiDriver
-    Status AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials) override;
+    Status AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials, MutableCharSpan & outDebugText,
+                              uint8_t & outNetworkIndex) override;
     void ScanNetworks(ByteSpan ssid, ScanCallback * callback) override;
 
     CHIP_ERROR ConnectWiFiNetwork(const char * ssid, uint8_t ssidLen, const char * key, uint8_t keyLen);
     void OnConnectWiFiNetwork();
     void OnScanWiFiNetworkDone();
+    void OnNetworkStatusChange();
+
+    CHIP_ERROR SetLastDisconnectReason(const ChipDeviceEvent * event);
+    int32_t GetLastDisconnectReason();
+
     static BekenWiFiDriver & GetInstance()
     {
         static BekenWiFiDriver instance;
@@ -128,6 +134,8 @@ private:
     WiFiNetwork mStagingNetwork;
     ScanCallback * mpScanCallback;
     ConnectCallback * mpConnectCallback;
+    NetworkStatusChangeCallback * mpStatusChangeCallback = nullptr;
+    int32_t mLastDisconnectedReason;
 };
 
 } // namespace NetworkCommissioning

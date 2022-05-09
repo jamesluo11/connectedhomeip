@@ -34,13 +34,15 @@
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
 
 //#if CONFIG_ENABLE_OTA_REQUESTOR
-#include "app/clusters/ota-requestor/BDXDownloader.h"
-#include "app/clusters/ota-requestor/OTARequestor.h"
-#include "platform/Beken/OTAImageProcessorImpl.h"
-#include "platform/GenericOTARequestorDriver.h"
+#include "app/clusters/ota-requestor/DefaultOTARequestorStorage.h"
+#include <app/clusters/ota-requestor/BDXDownloader.h>
+#include <app/clusters/ota-requestor/DefaultOTARequestor.h>
+#include <app/clusters/ota-requestor/DefaultOTARequestorDriver.h>
+#include <app/clusters/ota-requestor/DefaultOTARequestorUserConsent.h>
+#include <app/clusters/ota-requestor/ExtendedOTARequestorDriver.h>
 //#endif
 
-using chip::OTAImageProcessorImpl;
+//using chip::OTAImageProcessorImpl;
 using chip::BDXDownloader;
 using chip::ByteSpan;
 using chip::EndpointId;
@@ -50,8 +52,8 @@ using chip::NodeId;
 using chip::OnDeviceConnected;
 using chip::OnDeviceConnectionFailure;
 using chip::OTADownloader;
-using chip::OTAImageProcessorParams;
-using chip::OTARequestor;
+//using chip::OTAImageProcessorParams;
+//using chip::OTARequestor;
 using chip::VendorId;
 using chip::Callback::Callback;
 using chip::System::Layer;
@@ -69,10 +71,10 @@ using namespace ::chip::System;
 namespace {
 
 static DeviceCallbacks EchoCallbacks;
-OTARequestor gRequestorCore;
-GenericOTARequestorDriver gRequestorUser;
+//OTARequestor gRequestorCore;
+//GenericOTARequestorDriver gRequestorUser;
 BDXDownloader gDownloader;
-OTAImageProcessorImpl gImageProcessor;
+//OTAImageProcessorImpl gImageProcessor;
 
 app::Clusters::NetworkCommissioning::Instance
     sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::BekenWiFiDriver::GetInstance()));
@@ -89,21 +91,21 @@ bool isRendezvousBLE()
 extern "C" void QueryImageCmdHandler()
 {
     ChipLogProgress(DeviceLayer, "Calling QueryImageCmdHandler");
-    static_cast<OTARequestor *>(GetRequestorInstance())->TriggerImmediateQuery();
+    //static_cast<OTARequestor *>(GetRequestorInstance())->TriggerImmediateQuery();
 }
 
 extern "C" void ApplyUpdateCmdHandler()
 {
     ChipLogProgress(DeviceLayer, "Calling ApplyUpdateCmdHandler");
 
-    static_cast<OTARequestor *>(GetRequestorInstance())->ApplyUpdate();
+    //static_cast<OTARequestor *>(GetRequestorInstance())->ApplyUpdate();
 }
 
 extern "C" void NotifyUpdateAppliedHandler(uint32_t version)
 {
     ChipLogProgress(DeviceLayer, "NotifyUpdateApplied");
     
-    static_cast<OTARequestor *>(GetRequestorInstance())->NotifyUpdateApplied(version);
+    //static_cast<OTARequestor *>(GetRequestorInstance())->NotifyUpdateApplied(version);
 }
 
 /*********************************************************************
@@ -145,9 +147,10 @@ extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen,
         ChipLogProgress(DeviceLayer,"cmd param error ");
         return ;
     }
-#endif
+
     QueryImageCmdHandler();
     ChipLogProgress(DeviceLayer,"QueryImageCmdHandler begin");
+#endif
 
     return ;
 }
@@ -162,7 +165,7 @@ extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen,
  *******************************************************************/
 extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
-    ApplyUpdateCmdHandler();
+    //ApplyUpdateCmdHandler();
     ChipLogProgress(DeviceLayer,"ApplyUpdateCmdHandler send request");
 
     return ;
@@ -178,6 +181,7 @@ extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen
  *******************************************************************/
 extern "C" void BkNotifyUpdateApplied(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
+#if 0
     uint32_t dwLoop = 0;
     uint32_t version = 0;
 
@@ -205,12 +209,13 @@ extern "C" void BkNotifyUpdateApplied(char *pcWriteBuffer, int xWriteBufferLen, 
 
     NotifyUpdateAppliedHandler( version);
     ChipLogProgress(DeviceLayer,"NotifyUpdateApplied send request");
-
+#endif
     return ;
 }
 
 static void InitOTARequestor(void)
 {
+#if 0
     // Initialize and interconnect the Requestor and Image Processor objects -- START
     SetRequestorInstance(&gRequestorCore);
     ChipLogProgress(DeviceLayer,"InitOTARequestor gRequestorCore init");
@@ -234,7 +239,7 @@ static void InitOTARequestor(void)
     // Connect the Downloader and Image Processor objects
     gDownloader.SetImageProcessorDelegate(&gImageProcessor);
     gRequestorUser.Init(&gRequestorCore, &gImageProcessor);
-
+#endif
     // Initialize and interconnect the Requestor and Image Processor objects -- END
 }
 //#endif // CONFIG_ENABLE_OTA_REQUESTOR
@@ -341,6 +346,20 @@ extern "C" bool __sync_bool_compare_and_swap_4(volatile void* ptr, unsigned int 
         return false;
     }
 }
+
+extern "C" bool __sync_bool_compare_and_swap_1(volatile void* ptr, unsigned char oldval, unsigned char newval)
+{
+    if (*(unsigned char*)ptr == oldval)
+    {
+       *(unsigned char*)ptr = newval;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 /* stub for __libc_init_array */
 extern "C" void _fini(void) { }
 extern "C" void _init(void) {;}
@@ -348,7 +367,9 @@ extern "C" void _init(void) {;}
 static void InitServer(intptr_t context)
 {
     // Init ZCL Data Model and CHIP App Server
-    chip::Server::GetInstance().Init();
+    static chip::CommonCaseDeviceServerInitParams initParams;
+    (void) initParams.InitializeStaticResourcesBeforeServerInit();
+    chip::Server::GetInstance().Init(initParams);
 
     // Initialize device attestation config
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
