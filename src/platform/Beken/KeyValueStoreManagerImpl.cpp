@@ -38,14 +38,13 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
     CHIP_ERROR err = CHIP_NO_ERROR;
     int32_t ret    = -1;
     uint32_t dwTeReadBytes = 0;
-    
+
     if ((!value) || offset_bytes > 0)
     {
         // Offset and partial reads are not supported in nvs, for now just return NOT_IMPLEMENTED. Support can be added in the
         // future if this is needed.
         return (err = CHIP_ERROR_INVALID_ARGUMENT);
     }
-    
     if(read_bytes_size == NULL)
     {
         ret = bk_read_data(GetKVNameSpaceName(key), key, (char *) value, value_size, &dwTeReadBytes);
@@ -54,14 +53,9 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
     {
         ret = bk_read_data(GetKVNameSpaceName(key), key, (char *) value, value_size, (uint32_t *)read_bytes_size);
     }
-
     if (ret == kNoErr)
     {
         err = CHIP_NO_ERROR;
-        if (read_bytes_size)
-        {
-            *read_bytes_size = value_size;
-        }
     }
     else
     {
