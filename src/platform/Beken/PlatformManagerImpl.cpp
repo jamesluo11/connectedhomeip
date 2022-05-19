@@ -25,6 +25,7 @@
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
 #include <crypto/CHIPCryptoPAL.h>
+#include <platform/Beken/DeviceInfoProviderImpl.h>
 #include <platform/Beken/DiagnosticDataProviderImpl.h>
 #include <platform/Beken/SystemTimeSupport.h>
 #include <platform/PlatformManager.h>
@@ -47,6 +48,7 @@ CHIP_ERROR PlatformManagerImpl::_InitChipStack(void)
 
     SetConfigurationMgr(&ConfigurationManagerImpl::GetDefaultInstance());
     SetDiagnosticDataProvider(&DiagnosticDataProviderImpl::GetDefaultInstance());
+    SetDeviceInfoProvider(&DeviceInfoProviderImpl::GetDefaultInstance());
 
     // Make sure the LwIP core lock has been initialized
     err = Internal::InitLwIPCoreLock();
