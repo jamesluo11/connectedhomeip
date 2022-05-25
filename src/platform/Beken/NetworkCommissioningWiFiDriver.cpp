@@ -260,29 +260,28 @@ CHIP_ERROR BekenWiFiDriver::StartScanWiFiNetworks(ByteSpan ssid)
 void BekenWiFiDriver::OnScanWiFiNetworkDone()
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::OnScanWiFiNetworkDone\r\n");
-    ScanResult_adv apList;
-    int scan_rst_ap_num = 0;
-    if (wlan_sta_scan_result(&apList) == 0) {
-        scan_rst_ap_num = apList.ApNum;
-		ChipLogProgress(NetworkProvisioning,"Got ap count: %d\r\n", apList.ApNum);
-    }
-    if(scan_rst_ap_num == 0)
+    if(!GetInstance().mpScanCallback)
     {
-        os_printf("NULL AP\r\n");
-        GetInstance().mpScanCallback->OnFinished(Status::kSuccess, CharSpan(), nullptr);
-        GetInstance().mpScanCallback = nullptr;
+        ChipLogProgress(NetworkProvisioning, "can't find the ScanCallback function\r\n");
         return;
     }
-    BKScanResponseIterator iter(scan_rst_ap_num, &apList);
-    if (GetInstance().mpScanCallback)
+    ScanResult_adv apList;
+    int scan_rst_ap_num = 0;
+    wlan_sta_scan_result(&apList);
+    scan_rst_ap_num = apList.ApNum;
+
+    if(scan_rst_ap_num < 2)
     {
-        GetInstance().mpScanCallback->OnFinished(Status::kSuccess, CharSpan(), &iter);
-        GetInstance().mpScanCallback = nullptr;
+        ChipLogProgress(NetworkProvisioning,"NULL AP\r\n");
+        GetInstance().mpScanCallback->OnFinished(Status::kNetworkNotFound, CharSpan(), nullptr);
     }
     else
     {
-        ChipLogProgress(NetworkProvisioning, "can't find the ScanCallback function\r\n");
+        ChipLogProgress(NetworkProvisioning,"AP num = %d\r\n", scan_rst_ap_num);
+        BKScanResponseIterator iter(scan_rst_ap_num, &apList);
+        GetInstance().mpScanCallback->OnFinished(Status::kSuccess, CharSpan(), &iter);
     }
+    GetInstance().mpScanCallback = nullptr;
 }
 
 void scan_ap_cb(void *ctxt, uint8_t param)
