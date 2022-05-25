@@ -59,7 +59,7 @@ public:
 private:
     const size_t mSize;
     const ScanResult_adv * mpScanResults;
-    size_t mIternum = 0;
+    size_t mIternum = 1;
 };
 
 class BekenWiFiDriver final : public WiFiDriver
