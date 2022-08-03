@@ -24,8 +24,10 @@
 
 /* this file behaves like a config.h, comes first */
 #include <crypto/CHIPCryptoPAL.h>
-#include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <platform/CommissionableDataProvider.h>
+#include <platform/DeviceInstanceInfoProvider.h>
+#include <platform/internal/CHIPDeviceLayerInternal.h>
+#include <setup_payload/AdditionalDataPayloadGenerator.h>
 
 
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
@@ -513,9 +515,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
     }
     break;
 
-    case DeviceEventType::kFabricMembershipChange:
     case DeviceEventType::kServiceProvisioningChange:
-    case DeviceEventType::kAccountPairingChange:
     case DeviceEventType::kWiFiConnectivityChange:
 
 // If CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED is enabled, when there is a change to the device's provisioning state and device
@@ -1028,11 +1028,11 @@ void BLEManagerImpl::beken_ble_cmd_cb(ble_cmd_t cmd, ble_cmd_param_t *param)
     {
         uint32_t bleAdvTimeoutMs;
         sInstance.mFlags.Set(Flags::kBEKENBLEADVStarted);
-        if (sInstance.mFlags.Has(Flags::kAdvertisingIsFastADV)){
+       // if (sInstance.mFlags.Has(Flags::kAdvertisingIsFastADV)){
              bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_INTERVAL_CHANGE_TIME;
-        }else{
-             bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_TIMEOUT;
-        }
+        //}else{
+         //    bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_TIMEOUT;
+        //}
         StartBleAdvTimeoutTimer(bleAdvTimeoutMs);
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
     }
@@ -1073,7 +1073,7 @@ void BLEManagerImpl::HandleC3CharRead(void * param)
     uint8_t rotatingDeviceIdUniqueId[ConfigurationManager::kRotatingDeviceIDUniqueIDLength] = {};
     MutableByteSpan rotatingDeviceIdUniqueIdSpan(rotatingDeviceIdUniqueId);
 
-    err = ConfigurationMgr().GetRotatingDeviceIdUniqueId(rotatingDeviceIdUniqueIdSpan);
+    err = DeviceLayer::GetDeviceInstanceInfoProvider()->GetRotatingDeviceIdUniqueId(rotatingDeviceIdUniqueIdSpan);
     SuccessOrExit(err);
     err = ConfigurationMgr().GetLifetimeCounter(additionalDataPayloadParams.rotatingDeviceIdLifetimeCounter);
     SuccessOrExit(err);

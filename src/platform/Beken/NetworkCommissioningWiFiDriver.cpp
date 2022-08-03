@@ -68,10 +68,9 @@ CHIP_ERROR BekenWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChan
     return err;
 }
 
-CHIP_ERROR BekenWiFiDriver::Shutdown()
+void BekenWiFiDriver::Shutdown()
 {
     mpStatusChangeCallback = nullptr;
-    return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR BekenWiFiDriver::CommitConfiguration()
@@ -163,7 +162,9 @@ void BekenWiFiDriver::OnConnectWiFiNetwork()
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::OnConnectWiFiNetwork\r\n");
     if (mpConnectCallback)
     {
+        chip::DeviceLayer::PlatformMgr().LockChipStack();
         mpConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
+        chip::DeviceLayer::PlatformMgr().UnlockChipStack();
         mpConnectCallback = nullptr;
     }
 }
@@ -189,7 +190,9 @@ exit:
     {
         ChipLogError(NetworkProvisioning, "Failed to connect to WiFi network:%s", chip::ErrorStr(err));
         mpConnectCallback = nullptr;
+        chip::DeviceLayer::PlatformMgr().LockChipStack();
         callback->OnResult(networkingStatus, CharSpan(), 0);
+        chip::DeviceLayer::PlatformMgr().UnlockChipStack();
     }
 }
 
