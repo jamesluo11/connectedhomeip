@@ -116,14 +116,6 @@ extern "C" void NotifyUpdateAppliedHandler(uint32_t version)
     PlatformMgr().ScheduleWork([](intptr_t) { GetRequestorInstance()->NotifyUpdateApplied(); });
 }
 
-/*********************************************************************
- * Funtion Name:BkQueryImageCmdHandler
- *
- * Funtion Discription:trigger ota requestor queries image from ota provider
- *
- * 
- * Date:2022-02-22
- *******************************************************************/
 extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
     uint32_t dwLoop = 0;
@@ -161,14 +153,6 @@ extern "C" void BkQueryImageCmdHandler(char *pcWriteBuffer, int xWriteBufferLen,
     return ;
 }
 
-/*********************************************************************
- * Funtion Name:BkApplyUpdateCmdHandler
- *
- * Funtion Discription:trigger ota requestor queries image from ota provider
- *
- * 
- * Date:2022-02-22
- *******************************************************************/
 extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
     //ApplyUpdateCmdHandler();
@@ -177,14 +161,6 @@ extern "C" void BkApplyUpdateCmdHandler(char *pcWriteBuffer, int xWriteBufferLen
     return ;
 }
 
-/*********************************************************************
- * Funtion Name:BkNotifyUpdateApplied
- *
- * Funtion Discription:trigger ota requestor notify update applied to ota provider
- *
- * 
- * Date:2022-03-10
- *******************************************************************/
 extern "C" void BkNotifyUpdateApplied(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv )
 {
     uint32_t dwLoop = 0;
