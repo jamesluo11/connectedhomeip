@@ -58,9 +58,9 @@ void DeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, intptr_
         OnInternetConnectivityChange(event);
         break;
 
-    case DeviceEventType::kSessionEstablished:
-        OnSessionEstablished(event);
-        break;
+    //case DeviceEventType::kSessionEstablished:
+     //   OnSessionEstablished(event);
+    //    break;
     case DeviceEventType::kInterfaceIpAddressChanged:
         ChipLogProgress(Zcl, "IP(%s) changed event", (event->InterfaceIpAddressChanged.Type == InterfaceIpChangeType::kIpV4_Assigned)? "IPv4": "IPv6");
         if ((event->InterfaceIpAddressChanged.Type == InterfaceIpChangeType::kIpV4_Assigned) ||

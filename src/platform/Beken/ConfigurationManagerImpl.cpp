@@ -234,5 +234,10 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     bk_reboot();
 }
 
+ConfigurationManager & ConfigurationMgrImpl()
+{
+    return ConfigurationManagerImpl::GetDefaultInstance();
+}
+
 } // namespace DeviceLayer
 } // namespace chip
