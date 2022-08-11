@@ -21,30 +21,31 @@ devices:
 ## Building the Example Application
 
 Building the example application requires the use of the BEKEN ARMINO IoT
-Development Framework ([BK-ARMINO](https://github.com/bekencorp/armino)).
+Development Framework ([BK-ARMINO](https://github.com/zhengyaohan/armino)).
 
 -   Setting up the build environment, recommended with Ubuntu 20.04 LTS
 
     Armino sdk download
 
         $ cd ~ 
-        $ git clone https://github.com/bekencorp/armino.git
+        $ git clone git@github.com:zhengyaohan/armino.git
+        $ git checkout matter
 
-    Toolchain download and install, the toolchain should be installed to "/opt"
+    Toolchain [download](http://dl.bekencorp.com/tools/toolchain/risc-v_20220418.tar.gz)  and install, the toolchain should be installed to "/opt/risc-v"
 
-        $ wget http://dl.bekencorp.com:8192/tools/toolchain/toolchain_v5.1.1.tgz
-        $ sudo tar xvzf toolchain_v5.1.1.tgz -C /
+        $ sudo tar xvzf {abs-path-to-download}/risc-v_20220418.tar.gz -C /opt
+        $ sudo mv /opt/risc-v_20220418 /opt/risc-v
         $ sudo chown -R $USER:$USER /opt/risc-v
 
 
     Software dependency install
-
+    
         $ sudo dpkg --add-architecture i386
         $ sudo apt-get update
         $ sudo apt-get install build-essential cmake python3 python3-pip doxygen ninja-build libc6:i386 libstdc++6:i386 libncurses5-dev lib32z1 -y
         $ sudo pip3 install sphinx_rtd_theme future breathe blockdiag sphinxcontrib-seqdiag sphinxcontrib-actdiag sphinxcontrib-nwdiag sphinxcontrib.blockdiag
         $ sudo ln -s /usr/bin/python3 /usr/bin/python
-
+    
     To activate connectedhomeip files.
     
         $ cd {abs-path-to-connectedhomeip}
@@ -60,7 +61,7 @@ Development Framework ([BK-ARMINO](https://github.com/bekencorp/armino)).
 
         $ cd {abs-path-to-ARMINO}
         $ make bk7235 PROJECT=matter
-        
+    
     the output bin file is {abs-path-to-ARMINO}/build/matter/bk7235/all-app.bin. you can use [WINDOWS BEKEN FLASH WRITE TOOL](http://dl.bekencorp.com:8192/tools/flash/BEKEN_WRITER_EN_V2.6.28_20220326.zip) to flash the demo application onto the device.
 
 
@@ -76,5 +77,4 @@ Development Framework ([BK-ARMINO](https://github.com/bekencorp/armino)).
 After successful commissioning, use the OnOff cluster command to control the OnOff attribute. This allows you to toggle a parameter implemented by the device to be On or Off.
 
     $ ./out/debug/chip-tool onoff on 12345 1
-
 
