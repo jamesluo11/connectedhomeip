@@ -44,7 +44,7 @@ static_library("Beken") {
     "OTAImageProcessorImpl.h",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
-    "SoftwareUpdateManagerImpl.h",
+    #"SoftwareUpdateManagerImpl.h",
     "SystemPlatformConfig.h",
     "NetworkCommissioningWiFiDriver.cpp",
     "CHIPMem-Platform.cpp",
