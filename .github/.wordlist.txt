@@ -832,7 +832,6 @@ mdash
 MDNS
 MediaInput
 MediaPlayback
-MediaTek
 mem
 memdf
 MemMonitoring
