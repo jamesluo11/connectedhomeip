@@ -35,7 +35,8 @@ namespace DeviceEventType {
  */
 enum PublicPlatformSpecificEventTypes
 {
-    kBKSystemEvent = kRange_PublicPlatformSpecific,
+    /* None currently defined */
+    // kBKSystemEvent = kRange_PublicPlatformSpecific,
 };
 
 /**
@@ -77,13 +78,6 @@ struct ChipDevicePlatformEvent final
         {
             uint8_t dummy;
         } CHIPoBLETXCharWriteEvent;
-        struct
-        {
-            union
-            {
-                uint16_t WiFiStaDisconnected;
-            } Data;
-        } BKSystemEvent;
     };
 };
 

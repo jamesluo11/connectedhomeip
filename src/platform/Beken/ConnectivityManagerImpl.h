@@ -45,7 +45,7 @@
 
 #include <lib/support/BitFlags.h>
 
-#include <components/event.h>
+//#include <wifi_conf.h>
 
 namespace chip {
 
@@ -151,8 +151,7 @@ private:
 
     static ConnectivityManagerImpl sInstance;
     static void WiFiStationConnectedHandler();
-    static int wlan_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data);
-    static int netif_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data);
+    static void wlan_status_cb(void *ctxt);
     void IpConnectedEventNotify(void);
 };
 

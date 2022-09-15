@@ -25,19 +25,21 @@
 
 #pragma once
 
+#include "CHIPDeviceManager.h"
 #include <app/util/af-types.h>
-#include <common/CHIPDeviceManager.h>
-#include <common/CommonDeviceCallbacks.h>
+#include <app/util/basic-types.h>
 #include <platform/CHIPDeviceLayer.h>
 
-class AppDeviceCallbacks : public CommonDeviceCallbacks
+class DeviceCallbacks : public chip::DeviceManager::CHIPDeviceManagerCallbacks
 {
 public:
-    virtual void PostAttributeChangeCallback(chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
-                                             uint8_t type, uint16_t size, uint8_t * value);
+    void DeviceEventCallback(const chip::DeviceLayer::ChipDeviceEvent * event, intptr_t arg) override;
+    void PostAttributeChangeCallback(chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
+                                     uint8_t mask, uint8_t type, uint16_t size, uint8_t * value) override;
 
 private:
-    void OnIdentifyPostAttributeChangeCallback(chip::EndpointId endpointId, chip::AttributeId attributeId, uint8_t * value);
+    void OnInternetConnectivityChange(const chip::DeviceLayer::ChipDeviceEvent * event);
+    void OnSessionEstablished(const chip::DeviceLayer::ChipDeviceEvent * event);
     void OnOnOffPostAttributeChangeCallback(chip::EndpointId endpointId, chip::AttributeId attributeId, uint8_t * value);
-    void OnLevelControlAttributeChangeCallback(chip::EndpointId endpointId, chip::AttributeId attributeId, uint8_t * value);
+    void OnIdentifyPostAttributeChangeCallback(chip::EndpointId endpointId, chip::AttributeId attributeId, uint8_t * value);
 };

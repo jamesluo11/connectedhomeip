@@ -21,9 +21,10 @@
  *          Platform-specific key value storage implementation for Beken
  */
 /* this file behaves like a config.h, comes first */
-#include "matter_pal.h"
 #include <platform/KeyValueStoreManager.h>
 #include <support/CodeUtils.h>
+#include "error.h"
+#include "flash_namespace_value.h"
 
 namespace chip {
 namespace DeviceLayer {

@@ -20,9 +20,11 @@
 #include <app/clusters/ota-requestor/OTARequestorInterface.h>
 #include <lib/support/logging/CHIPLogging.h>
 
-#include "matter_pal.h"
 #include <platform/Beken/OTAImageProcessorImpl.h>
-#include <string.h>
+#include "wlan_ui_pub.h"
+#include "BkDriverFlash.h"
+#include "flash_namespace_value.h"
+#include "mem_pub.h"
 
 using namespace chip::System;
 using namespace ::chip::DeviceLayer::Internal;
@@ -150,11 +152,7 @@ void OTAImageProcessorImpl::HandleFinalize(intptr_t context)
         return;
     }
 
-#if CONFIG_FLASH_ORIGIN_API
     partition_info = bk_flash_get_info(BK_PARTITION_OTA);
-#else
-    partition_info = bk_flash_partition_get_info(BK_PARTITION_OTA);
-#endif
     BK_CHECK_POINTER_NULL_TO_VOID(partition_info);
     dwFlagAddrOffset = partition_info->partition_length - (sizeof(ucFinishFlag) - 1);
 
@@ -206,6 +204,7 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 
     if (!imageProcessor->readHeader) // First block received, process header
     {
+        // ota_data_struct_t * tempBuf = (ota_data_struct_t *) os_malloc(sizeof(ota_data_struct_t));
         ota_data_struct_t * tempBuf = (ota_data_struct_t *) chip::Platform::MemoryAlloc(sizeof(ota_data_struct_t));
 
         if (NULL == tempBuf)
@@ -227,11 +226,7 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         UINT32 dwFlagAddrOffset                 = 0;
         char ucflag[(sizeof(ucFinishFlag) - 1)] = { 0 };
 
-#if CONFIG_FLASH_ORIGIN_API
         partition_info = bk_flash_get_info(BK_PARTITION_OTA);
-#else
-        partition_info = bk_flash_partition_get_info(BK_PARTITION_OTA);
-#endif
         BK_CHECK_POINTER_NULL_TO_VOID(partition_info);
 
         dwFlagAddrOffset = partition_info->partition_length - (sizeof(ucFinishFlag) - 1);
@@ -241,6 +236,7 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         if ((0 == memcmp(ucflag, ucFinishFlag, (sizeof(ucFinishFlag) - 1))) &&
             (0 == memcmp(tempBuf->version, imageProcessor->pOtaTgtHdr.version, sizeof(imageProcessor->pOtaTgtHdr.version))))
         {
+            // os_free(tempBuf);
             chip::Platform::MemoryFree(tempBuf);
             tempBuf = NULL;
             ChipLogError(SoftwareUpdate, "The version is is the same as the previous version");
@@ -257,6 +253,7 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 
         if (0 != bk_write_ota_data_to_flash((char *) block.data(), imageProcessor->flash_data_offset, block.size()))
         {
+            // os_free(tempBuf);
             chip::Platform::MemoryFree(tempBuf);
             tempBuf = NULL;
             ChipLogError(SoftwareUpdate, "bk_write_ota_data_to_flash failed %s [%d] ", __FUNCTION__, __LINE__);
@@ -266,6 +263,7 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 
         imageProcessor->flash_data_offset += block.size(); // count next write flash address
 
+        // os_free(tempBuf);
         chip::Platform::MemoryFree(tempBuf);
         tempBuf = NULL;
     }

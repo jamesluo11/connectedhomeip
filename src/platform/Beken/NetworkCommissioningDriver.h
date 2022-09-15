@@ -16,8 +16,8 @@
  */
 
 #pragma once
-#include "matter_pal.h"
 #include <platform/NetworkCommissioning.h>
+#include "wlan_ui_pub.h"
 
 #define NC_SECURITYCONVERT(security) ((security < 3) ? security : (security == 3) ? 2 : (security < 7) ? 3 : 4)
 
@@ -34,7 +34,7 @@ constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 20;
 class BKScanResponseIterator : public Iterator<WiFiScanResponse>
 {
 public:
-    BKScanResponseIterator(const size_t size, const wifi_scan_result_t * scanResults) : mSize(size), mpScanResults(scanResults) {}
+    BKScanResponseIterator(const size_t size, const ScanResult_adv * scanResults) : mSize(size), mpScanResults(scanResults) {}
     size_t Count() override { return mSize; }
     bool Next(WiFiScanResponse & item) override
     {
@@ -42,14 +42,14 @@ public:
         {
             return false;
         }
-        uint8_t ssidlenth = strlen(mpScanResults->aps[mIternum].ssid);
-        item.security.SetRaw(NC_SECURITYCONVERT(mpScanResults->aps[mIternum].security));
-        item.ssidLen  = ssidlenth;
-        item.channel  = mpScanResults->aps[mIternum].channel;
+        uint8_t ssidlenth = strlen(mpScanResults->ApList[mIternum].ssid);
+        item.security.SetRaw(NC_SECURITYCONVERT(mpScanResults->ApList[mIternum].security));
+        item.ssidLen = ssidlenth;
+        item.channel  = mpScanResults->ApList[mIternum].channel;
         item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
-        item.rssi     = mpScanResults->aps[mIternum].rssi;
-        memcpy(item.ssid, mpScanResults->aps[mIternum].ssid, ssidlenth);
-        memcpy(item.bssid, mpScanResults->aps[mIternum].bssid, 6);
+        item.rssi     = mpScanResults->ApList[mIternum].ApPower;
+        memcpy(item.ssid, mpScanResults->ApList[mIternum].ssid, ssidlenth);
+        memcpy(item.bssid, mpScanResults->ApList[mIternum].bssid, 6);
 
         mIternum++;
         return true;
@@ -58,8 +58,8 @@ public:
 
 private:
     const size_t mSize;
-    const wifi_scan_result_t * mpScanResults;
-    size_t mIternum = 1;
+    const ScanResult_adv * mpScanResults;
+    size_t mIternum = 0;
 };
 
 class BekenWiFiDriver final : public WiFiDriver
@@ -122,7 +122,7 @@ public:
         static BekenWiFiDriver instance;
         return instance;
     }
-    CHIP_ERROR GetSavedNetWorkConfig(WiFiNetwork * WifiNetconf);
+    // CHIP_ERROR GetSavedNetWorkConfig(WiFiNetwork * WifiNetconf);
 
 private:
     bool NetworkMatch(const WiFiNetwork & network, ByteSpan networkId);
