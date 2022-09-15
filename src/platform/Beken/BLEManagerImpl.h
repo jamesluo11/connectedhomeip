@@ -22,9 +22,7 @@
 #include "FreeRTOS.h"
 #include "event_groups.h"
 
-#include "ble_api_5_x.h"
-#include "rtos_pub.h"
-#include "timers.h"
+#include "matter_pal.h"
 
 namespace chip {
 namespace DeviceLayer {
