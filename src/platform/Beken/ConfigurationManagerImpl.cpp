@@ -31,7 +31,7 @@
 #include <support/CodeUtils.h>
 #include <support/logging/CHIPLogging.h>
 
-#include "matter_pal.h"
+#include "wlan_ui_pub.h"
 
 namespace chip {
 namespace DeviceLayer {
@@ -126,7 +126,7 @@ CHIP_ERROR ConfigurationManagerImpl::StoreBootReason(uint32_t bootReason)
 
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
 {
-    bk_wifi_sta_get_mac(buf);
+    bk_wifi_get_station_mac_address((char*)buf);
     return CHIP_NO_ERROR;
 }
 
@@ -226,7 +226,11 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     ChipLogProgress(DeviceLayer, "Performing factory reset");
 
     // Erase all values in the chip-config NVS namespace.
-    bk_erase_all(BK_PARTITION_MATTER_FLASH);
+    err = BekenConfig::ClearNamespace(BekenConfig::kConfigNamespace_ChipConfig);
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace(ChipConfig) failed: %s", chip::ErrorStr(err));
+    }
 
     // Restart the system.
     ChipLogProgress(DeviceLayer, "System restarting");

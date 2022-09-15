@@ -27,7 +27,8 @@
 #include <platform/Beken/DiagnosticDataProviderImpl.h>
 #include <platform/DiagnosticDataProvider.h>
 
-#include "matter_pal.h"
+#include "wlan_ui_pub.h"
+#include "net.h"
 
 namespace chip {
 namespace DeviceLayer {

@@ -24,9 +24,11 @@
  */
 
 //#include <lib/core/CHIPConfig.h>
-#include "matter_pal.h"
 #include <lib/support/CHIPMem.h>
+#include "projdefs.h"
+#include "portable.h"
 #include <platform/PlatformManager.h>
+
 
 #include <atomic>
 #include <cstdio>
@@ -80,7 +82,7 @@ void * MemoryAlloc(size_t size)
 {
     void * ptr;
     VERIFY_INITIALIZED();
-    ptr = os_zalloc(size); // NULL;
+    ptr = pvPortMalloc(size);
     return ptr;
 }
 
@@ -88,28 +90,28 @@ void * MemoryAlloc(size_t size, bool isLongTermAlloc)
 {
     void * ptr;
     VERIFY_INITIALIZED();
-    ptr = os_zalloc(size);
+    ptr = pvPortMalloc(size);
     return ptr;
 }
 
 void * MemoryCalloc(size_t num, size_t size)
 {
     VERIFY_INITIALIZED();
-    void * ptr = os_zalloc(num * size);
+    void * ptr = pvPortCalloc(num, size);
     return ptr;
 }
 
 void * MemoryRealloc(void * p, size_t size)
 {
     VERIFY_INITIALIZED();
-    p = os_realloc(p, size);
+    p = pvPortRealloc(p, size);
     return p;
 }
 
 void MemoryFree(void * p)
 {
     VERIFY_INITIALIZED();
-    os_free(p);
+    vPortFree(p);
 }
 
 bool MemoryInternalCheckPointer(const void * p, size_t min_size)

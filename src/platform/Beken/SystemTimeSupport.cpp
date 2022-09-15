@@ -72,6 +72,7 @@ CHIP_ERROR InitClock_RealTime()
     baseTime =
         Clock::Milliseconds64((static_cast<uint64_t>(CHIP_SYSTEM_CONFIG_VALID_REAL_TIME_THRESHOLD) * kMicrosecondsPerMillisecond));
 
+    // return CHIP_NO_ERROR;
     // Use CHIP_SYSTEM_CONFIG_VALID_REAL_TIME_THRESHOLD as the initial value of RealTime.
     // Then the RealTime obtained from GetClock_RealTime will be always valid.
     //

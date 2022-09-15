@@ -26,7 +26,8 @@
 #include <support/CodeUtils.h>
 #include <support/logging/CHIPLogging.h>
 
-#include "matter_pal.h"
+#include "error.h"
+#include "flash_namespace_value.h" //api for flash interface
 
 enum
 {

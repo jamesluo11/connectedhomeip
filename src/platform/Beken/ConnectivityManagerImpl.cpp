@@ -47,10 +47,12 @@
 #include <lwip/nd6.h>
 #include <lwip/netif.h>
 
+#include "wlan_ui_pub.h"
+#include "flash_namespace_value.h"
 #include "NetworkCommissioningDriver.h"
 
-#include "matter_pal.h"
-#include <components/netif.h>
+#define BEKEN_WIFI_INFO   "BekenWiFi"
+static uint32_t dwWifiExit =  0;
 
 using namespace ::chip;
 using namespace ::chip::Inet;
@@ -61,7 +63,7 @@ namespace chip {
 namespace DeviceLayer {
 
 ConnectivityManagerImpl ConnectivityManagerImpl::sInstance;
-NetworkCommissioning::BekenWiFiDriver::WiFiNetwork mWifiNetconf;
+// NetworkCommissioning::BekenWiFiDriver::WiFiNetwork mWifiNetconf;
 
 // ==================== ConnectivityManager Platform Internal Methods ====================
 
@@ -78,7 +80,26 @@ CHIP_ERROR ConnectivityManagerImpl::_Init()
     mWiFiAPIdleTimeout            = System::Clock::Milliseconds32(CHIP_DEVICE_CONFIG_WIFI_AP_IDLE_TIMEOUT);
     mFlags.SetRaw(0);
 
-    memset(&mWifiNetconf, 0x0, sizeof(mWifiNetconf));
+    // Ensure that station mode is enabled.
+    // wifi_on(RTW_MODE_STA);
+
+    // Ensure that station mode is enabled in the WiFi layer.
+    // wifi_set_mode(RTW_MODE_STA);
+    ;
+    ssid_key_save_t fci = {{0}};
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    
+    err = PersistedStorage::KeyValueStoreMgr().Get(BEKEN_WIFI_INFO, &fci,sizeof(ssid_key_save_t));
+    if(err !=  CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer,"%s %d KeyValueGet failed\r\n",__FUNCTION__,__LINE__);
+    }
+    else if(fci.ucssid[0] != 0)
+    {
+        dwWifiExit = 1;
+        ChipLogProgress(DeviceLayer,"Station get ssid: %s %s \r\n",fci.ucssid,fci.ucKey);
+    }
+
     // If there is no persistent station provision...
     if (!IsWiFiStationProvisioned())
     {
@@ -142,7 +163,7 @@ void ConnectivityManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
         ChipLogProgress(DeviceLayer, "_OnPlatformEvent WIFI_EVENT_STA_CONNECTED");
         if (mWiFiStationState == kWiFiStationState_Connecting)
         {
-            NetworkCommissioning::BekenWiFiDriver::GetInstance().OnConnectWiFiNetwork();
+            // NetworkCommissioning::BekenWiFiDriver::GetInstance().OnConnectWiFiNetwork();
             ChangeWiFiStationState(kWiFiStationState_Connecting_Succeeded);
         }
         DriveStationState();
@@ -153,7 +174,18 @@ void ConnectivityManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 ConnectivityManager::WiFiStationMode ConnectivityManagerImpl::_GetWiFiStationMode(void)
 {
-    // Enabled when platform instance initilazed
+#if 0
+    if (mWiFiStationMode != kWiFiStationMode_ApplicationControlled)
+    {
+        mWiFiStationMode = (wifi_mode == RTW_MODE_STA) ? kWiFiStationMode_Enabled : kWiFiStationMode_Disabled;
+    }
+#endif
+    if(dwWifiExit)
+    {
+        mWiFiStationMode = kWiFiStationMode_Enabled;
+    }
+
+    //TODO should enabled
     return kWiFiStationMode_Enabled;
 }
 
@@ -170,8 +202,7 @@ CHIP_ERROR ConnectivityManagerImpl::_SetWiFiStationMode(WiFiStationMode val)
 
     if (mWiFiStationMode == kWiFiStationMode_Disabled && val == kWiFiStationMode_Enabled)
     {
-        BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_WIFI, EVENT_ID_ALL, ConnectivityManagerImpl().wlan_event_cb, NULL));
-        BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_NETIF, EVENT_ID_ALL, ConnectivityManagerImpl().netif_event_cb, NULL));
+        bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
         ChangeWiFiStationState(kWiFiStationState_Connecting);
     }
 
@@ -194,10 +225,27 @@ exit:
 
 bool ConnectivityManagerImpl::_IsWiFiStationProvisioned(void)
 {
-    if (mWifiNetconf.ssidLen == 0)
-        NetworkCommissioning::BekenWiFiDriver::GetInstance().GetSavedNetWorkConfig(&mWifiNetconf);
-    ChipLogError(DeviceLayer, "wifi ssid:%s\r\n", mWifiNetconf.ssid);
-    return (mWifiNetconf.ssidLen != 0) ? true : false;
+    wlan_sta_config_t config;
+    bool rtn = false;
+
+    if(dwWifiExit)
+    {
+        rtn =  true ;
+    }
+    else
+    {
+        memset(&config, 0, sizeof(config));
+        config.field = WLAN_STA_FIELD_SSID;
+        if(0 != wlan_sta_get_config(&config))
+        {
+            ChipLogError(DeviceLayer, "wlan_sta_get_config failed!");
+            return false;
+        }
+        
+        rtn = (config.u.ssid.ssid[0] != 0) ? true : false;
+    }
+
+    return rtn;
 }
 
 void ConnectivityManagerImpl::_ClearWiFiStationProvision(void)
@@ -287,51 +335,64 @@ void ConnectivityManagerImpl::WiFiStationConnectedHandler()
 }
 
 static bool stationConnected = false;
-
-int ConnectivityManagerImpl::netif_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data)
+void ConnectivityManagerImpl::wlan_status_cb(void *ctxt)
 {
-    ssid_key_save_t wpa_save = { { 0 } };
-    switch (event_id)
-    {
-    case EVENT_NETIF_GOT_IP4:
+    int notice_event = *(unsigned int*)ctxt;
+    ssid_key_save_t wpa_save = {{0}};
+
+    switch(notice_event){
+    case RW_EVT_STA_GOT_IP:
         stationConnected = true;
         WiFiStationConnectedHandler();
-        ChipLogProgress(DeviceLayer, "netif_event_cb EVENT_NETIF_GOT_IP4");
+    
+        if (wpa_ssid_key_get(&wpa_save))
+        {
+            ChipLogError(DeviceLayer, "wpa_ssid_key_get  fail");
+            return ;
+        }
+        PersistedStorage::KeyValueStoreMgr().Put(BEKEN_WIFI_INFO, (const void *)&wpa_save, sizeof(ssid_key_save_t));
+        ChipLogProgress(DeviceLayer, "RW_EVT_STA_GOT_IP");
         break;
-    default:
-        ChipLogProgress(DeviceLayer, "unSupported netif status:%d", event_id);
+    case RW_EVT_STA_CONNECTED:
+        ChipLogProgress(DeviceLayer, "RW_EVT_STA_CONNECTED");
+	    NetworkCommissioning::BekenWiFiDriver::GetInstance().OnConnectWiFiNetwork();
         break;
-    }
-
-    return BK_OK;
-}
-
-int ConnectivityManagerImpl::wlan_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data)
-{
-    switch (event_id)
-    {
-    case EVENT_WIFI_STA_CONNECTED:
-        ChipLogProgress(DeviceLayer, "wlan_event_cb EVENT_WIFI_STA_CONNECTED");
-        break;
-    case EVENT_WIFI_STA_DISCONNECTED:
+    case RW_EVT_STA_DISCONNECTED:
         stationConnected = false;
-        ChipLogProgress(DeviceLayer, "wlan_event_cb EVENT_WIFI_STA_DISCONNECTED");
-        wifi_event_sta_disconnected_t * sta_disconnected;
-        sta_disconnected = (wifi_event_sta_disconnected_t *) event_data;
-        ChipDeviceEvent myevent;
-        myevent.Platform.BKSystemEvent.Data.WiFiStaDisconnected = sta_disconnected->disconnect_reason;
-        NetworkCommissioning::BekenWiFiDriver::GetInstance().SetLastDisconnectReason(&myevent);
+        ChipLogProgress(DeviceLayer, "RW_EVT_STA_DISCONNECTED");
         break;
     default:
-        ChipLogProgress(DeviceLayer, "unSupported wifi status:%d", event_id);
+        ChipLogProgress(DeviceLayer, "unSupported wifi status:%d", notice_event);
         break;
     }
-    return BK_OK;
 }
 
 void ConnectivityManagerImpl::DriveStationState()
 {
-    mWiFiStationMode = GetWiFiStationMode();
+    int ret;
+    GetWiFiStationMode();
+    // If the station interface is NOT under application control...
+    if (mWiFiStationMode != kWiFiStationMode_ApplicationControlled)
+    {
+        // Ensure that the WiFi layer is started.
+        //wifi_on(RTW_MODE_STA);
+
+        // Ensure that station mode is enabled in the WiFi layer.
+        //wifi_set_mode(RTW_MODE_STA);
+        ;
+    }
+#if 0
+    wlan_sta_states_t state;
+    ret = wlan_sta_state(&state);
+    if(ret != 0)
+    {
+        ChipLogError(DeviceLayer, "Get wlan sta state faield!");
+        return;
+    }
+
+    // Determine if the WiFi layer thinks the station interface is currently connected.
+    stationConnected = (state == WLAN_STA_STATE_CONNECTED) ? true : false;
+#endif
     ChipLogProgress(DeviceLayer, "wifi station state:%d, mWiFiStationState:%d", stationConnected, mWiFiStationState);
     // If the station interface is currently connected ...
     if (stationConnected)
@@ -345,6 +406,22 @@ void ConnectivityManagerImpl::DriveStationState()
             mLastStationConnectFailTime = System::Clock::kZero;
             OnStationConnected();
             IpConnectedEventNotify();
+        }
+
+        // If the WiFi station interface is no longer enabled, or no longer provisioned,
+        // disconnect the station from the AP, unless the WiFi station mode is currently
+        // under application control.
+        if (mWiFiStationMode != kWiFiStationMode_ApplicationControlled &&
+            (mWiFiStationMode != kWiFiStationMode_Enabled || !IsWiFiStationProvisioned()))
+        {
+            ChipLogProgress(DeviceLayer, "Disconnecting WiFi station interface");
+            if(0 != wlan_sta_disconnect())
+            {
+                ChipLogError(DeviceLayer, "wifi_disconnect() failed!");
+                return;
+            }
+
+            ChangeWiFiStationState(kWiFiStationState_Disconnecting);
         }
     }
 
@@ -384,18 +461,28 @@ void ConnectivityManagerImpl::DriveStationState()
             if (mLastStationConnectFailTime == System::Clock::kZero ||
                 now >= mLastStationConnectFailTime + mWiFiStationReconnectInterval)
             {
-                ChipLogProgress(DeviceLayer, "try to connect wifi");
-                wifi_sta_config_t sta_config;
+                    ChipLogProgress(DeviceLayer,"Attempting to connect WiFi station interface \r\n");
+                    ssid_key_save_t fci = {{0}};
+                    network_InitTypeDef_st network_cfg;
+                    
+                    PersistedStorage::KeyValueStoreMgr().Get(BEKEN_WIFI_INFO, &fci,sizeof(ssid_key_save_t));
+                    bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
 
-                memset(&sta_config, 0x0, sizeof(sta_config));
-                sta_config.security = WIFI_SECURITY_AUTO; // can't use WIFI_DEFAULT_STA_CONFIG because of C99 designator error
-                strncpy(sta_config.ssid, mWifiNetconf.ssid, mWifiNetconf.ssidLen);
-                strncpy(sta_config.password, mWifiNetconf.credentials, mWifiNetconf.credentialsLen);
-                BK_LOG_ON_ERR(bk_wifi_sta_set_config(&sta_config));
-                BK_LOG_ON_ERR(bk_wifi_sta_start());
-                BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_WIFI, EVENT_ID_ALL, ConnectivityManagerImpl().wlan_event_cb, NULL));
-                BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_NETIF, EVENT_ID_ALL, ConnectivityManagerImpl().netif_event_cb, NULL));
-                BK_LOG_ON_ERR(bk_wifi_sta_connect());
+                    memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
+                    network_cfg.wifi_mode = BK_STATION;
+                    strcpy(network_cfg.wifi_ssid, (char *)fci.ucssid);
+                    
+                    strcpy(network_cfg.wifi_key, (char *)fci.ucKey);
+                    network_cfg.dhcp_mode = DHCP_CLIENT;
+
+                    bk_wlan_start(&network_cfg);
+                #if 0
+                    if(0 != wlan_sta_connect(0))//assume not support fast connect
+                    {
+                        ChipLogError(DeviceLayer, "wlan_sta_connect() failed!");
+                        return;
+                    }
+                #endif
                 ChangeWiFiStationState(kWiFiStationState_Connecting);
             }
 
@@ -445,7 +532,7 @@ void ConnectivityManagerImpl::ChangeWiFiStationState(WiFiStationState newState)
         ChipLogProgress(DeviceLayer, "WiFi station state change: %s -> %s", WiFiStationStateToStr(mWiFiStationState),
                         WiFiStationStateToStr(newState));
         mWiFiStationState = newState;
-        SystemLayer().ScheduleLambda([]() { NetworkCommissioning::BekenWiFiDriver::GetInstance().OnNetworkStatusChange(); });
+        // SystemLayer().ScheduleLambda([]() { NetworkCommissioning::BekenWiFiDriver::GetInstance().OnNetworkStatusChange(); });
     }
 }
 

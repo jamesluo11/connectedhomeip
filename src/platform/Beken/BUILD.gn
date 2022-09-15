@@ -21,10 +21,10 @@ assert(chip_device_platform == "beken")
 static_library("Beken") {
   sources = [
     "../SingletonConfigurationManager.cpp",
-    "BLEManagerImpl.cpp",
-    "BLEManagerImpl.h",
     "BekenConfig.cpp",
     "BekenConfig.h",
+    "BLEManagerImpl.cpp",
+    "BLEManagerImpl.h",
     "CHIPDevicePlatformConfig.h",
     "CHIPDevicePlatformEvent.h",
     "CHIPMem-Platform.cpp",
@@ -33,27 +33,28 @@ static_library("Beken") {
     "ConnectivityManagerImpl.cpp",
     "ConnectivityManagerImpl.h",
 
-    #"DeviceInfoProviderImpl.cpp",
-    #"DeviceInfoProviderImpl.h",
+    # "DeviceInfoProviderImpl.cpp",
+    # "DeviceInfoProviderImpl.h",
     "DiagnosticDataProviderImpl.cpp",
     "DiagnosticDataProviderImpl.h",
     "KeyValueStoreManagerImpl.cpp",
     "KeyValueStoreManagerImpl.h",
     "Logging.cpp",
     "LwIPCoreLock.cpp",
-    "NetworkCommissioningWiFiDriver.cpp",
     "OTAImageProcessorImpl.cpp",
     "OTAImageProcessorImpl.h",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
+    "SoftwareUpdateManagerImpl.h",
     "SystemPlatformConfig.h",
     "SystemTimeSupport.cpp",
+    "NetworkCommissioningWiFiDriver.cpp",
   ]
 
-  deps = [
+  deps = [ 
     "${chip_root}/src/lib/dnssd:platform_header",
     "${chip_root}/src/setup_payload",
-  ]
+ ]
 
   public_deps = [
     "${chip_root}/src/crypto",
