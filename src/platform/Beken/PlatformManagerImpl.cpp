@@ -25,7 +25,6 @@
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
 #include <crypto/CHIPCryptoPAL.h>
-#include <platform/Beken/DeviceInfoProviderImpl.h>
 #include <platform/Beken/DiagnosticDataProviderImpl.h>
 #include <platform/Beken/SystemTimeSupport.h>
 #include <platform/PlatformManager.h>
