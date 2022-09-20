@@ -204,7 +204,7 @@ CHIP_ERROR GetConnectedNetwork(Network & network)
     uint8_t length = strnlen(reinterpret_cast<const char *>(wifi_setting.ssid), DeviceLayer::Internal::kMaxWiFiSSIDLength);
     memcpy(network.networkID, wifi_setting.ssid, length);
     ChipLogProgress(NetworkProvisioning, "networkID:[%s][%d]\r\n",network.networkID,length);
-    network.networkIDLen = sizeof(network.networkID);
+    network.networkIDLen = length;//yellan sizeof(network.networkID);
     return CHIP_NO_ERROR;
 }
 
@@ -264,7 +264,7 @@ CHIP_ERROR BekenWiFiDriver::StartScanWiFiNetworks(ByteSpan ssid)
 void BekenWiFiDriver::OnScanWiFiNetworkDone()
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::OnScanWiFiNetworkDone\r\n");
-    ScanResult_adv apList;
+    ScanResult_adv apList={0};//yellan 20220919
     int scan_rst_ap_num = 0;
     if (wlan_sta_scan_result(&apList) == 0) {
         scan_rst_ap_num = apList.ApNum;
