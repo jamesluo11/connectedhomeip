@@ -23,7 +23,9 @@
  *
  **/
 
+#include "common/bk_err.h"
 #include "DeviceCallbacks.h"
+#include "driver/gpio.h"
 
 #include <common/CHIPDeviceManager.h>
 
@@ -79,6 +81,11 @@ void AppDeviceCallbacks::OnOnOffPostAttributeChangeCallback(EndpointId endpointI
 
     // At this point we can assume that value points to a bool value.
     // statusLED1.Set(*value);
+    if(*value){
+        BK_LOG_ON_ERR(bk_gpio_set_output_low(GPIO_8));
+    } else {
+        BK_LOG_ON_ERR(bk_gpio_set_output_high(GPIO_8));
+    }
 
 exit:
     return;

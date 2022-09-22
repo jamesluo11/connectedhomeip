@@ -15,7 +15,9 @@
  *    limitations under the License.
  */
 
+#include "common/bk_err.h"
 #include "DeviceCallbacks.h"
+#include "driver/gpio.h"
 #include "Server.h"
 
 #include <common/BekenAppServer.h>
@@ -197,6 +199,11 @@ extern "C" void ChipTest(void)
     CHIP_ERROR err = CHIP_NO_ERROR;
 
     // initPref();
+
+    BK_LOG_ON_ERR(bk_gpio_disable_input(GPIO_8));
+    BK_LOG_ON_ERR(bk_gpio_enable_output(GPIO_8));
+    BK_LOG_ON_ERR(bk_gpio_disable_pull(GPIO_8));
+    BK_LOG_ON_ERR(bk_gpio_set_output_high(GPIO_8));
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
     err                           = deviceMgr.Init(&EchoCallbacks); // start the CHIP task
