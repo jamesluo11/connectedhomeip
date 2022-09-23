@@ -15,6 +15,7 @@
  *    limitations under the License.
  */
 
+#include "BkDriverGpio.h"
 #include "DeviceCallbacks.h"
 #include "Server.h"
 
@@ -197,6 +198,13 @@ extern "C" void ChipTest(void)
     CHIP_ERROR err = CHIP_NO_ERROR;
 
     // initPref();
+
+    BkGpioInitialize(GPIO6, OUTPUT_NORMAL);
+    BkGpioInitialize(GPIO7, OUTPUT_NORMAL);
+    BkGpioInitialize(GPIO8, OUTPUT_NORMAL);
+    BkGpioOutputHigh(GPIO6);
+    BkGpioOutputHigh(GPIO7);
+    BkGpioOutputHigh(GPIO8);
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
     err                           = deviceMgr.Init(&EchoCallbacks); // start the CHIP task
