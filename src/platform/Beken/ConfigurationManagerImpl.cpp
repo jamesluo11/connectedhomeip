@@ -138,7 +138,8 @@ CHIP_ERROR ConfigurationManagerImpl::GetSoftwareVersion(uint32_t & softwareVer)
     softwareVer = CHIP_CONFIG_SOFTWARE_VERSION_NUMBER;
     #endif
     BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_SoftwareVersion,softwareVer);
-   ChipLogError(DeviceLayer,"%s %d mSoftwareVersion %d\r\n",__FUNCTION__,__LINE__,softwareVer);
+
+    ChipLogError(DeviceLayer,"%s %d mSoftwareVersion %lu \r\n",__FUNCTION__,__LINE__,softwareVer);
     return CHIP_NO_ERROR;
 }
 
