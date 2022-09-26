@@ -19,6 +19,8 @@
 #include <app/clusters/ota-requestor/OTADownloader.h>
 #include <app/clusters/ota-requestor/OTARequestorInterface.h>
 #include <lib/support/logging/CHIPLogging.h>
+#include <platform/Beken/ConfigurationManagerImpl.h>
+#include <platform/Beken/BekenConfig.h>
 
 #include <platform/Beken/OTAImageProcessorImpl.h>
 #include "wlan_ui_pub.h"
@@ -28,6 +30,7 @@
 
 using namespace chip::System;
 using namespace ::chip::DeviceLayer::Internal;
+using namespace chip::DeviceLayer;
 
 namespace chip {
 
@@ -85,6 +88,7 @@ bool OTAImageProcessorImpl::IsFirstImageRun()
 CHIP_ERROR OTAImageProcessorImpl::ConfirmCurrentImage()
 {
     OTARequestorInterface * requestor = chip::GetRequestorInstance();
+    
     if (requestor == nullptr)
     {
         return CHIP_ERROR_INTERNAL;
@@ -93,6 +97,7 @@ CHIP_ERROR OTAImageProcessorImpl::ConfirmCurrentImage()
     uint32_t currentVersion;
     uint32_t targetVersion = requestor->GetTargetVersion();
     ReturnErrorOnFailure(DeviceLayer::ConfigurationMgr().GetSoftwareVersion(currentVersion));
+    ChipLogError(SoftwareUpdate," %s %d,currentVersion %d \r\n",__FUNCTION__,__LINE__,DeviceLayer::ConfigurationMgr().GetSoftwareVersion(currentVersion));
     if (currentVersion != targetVersion)
     {
         ChipLogError(SoftwareUpdate, "Current software version = %" PRIu32 ", expected software version = %" PRIu32, currentVersion,
@@ -348,6 +353,15 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessHeader(ByteSpan & block)
         ReturnErrorOnFailure(error);
 
         mParams.totalFileBytes = header.mPayloadSize;
+
+        BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion,header.mSoftwareVersion);
+
+        if(header.mSoftwareVersionString.data() != NULL)
+        {
+           BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
+        }
+        ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %d, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
+        
         mHeaderParser.Clear();
     }
 

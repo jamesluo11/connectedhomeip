@@ -51,6 +51,8 @@ private:
     CHIP_ERROR StoreRebootCount(uint32_t rebootCount);
     CHIP_ERROR GetTotalOperationalHours(uint32_t & totalOperationalHours);
     CHIP_ERROR StoreTotalOperationalHours(uint32_t totalOperationalHours);
+    CHIP_ERROR GetSoftwareVersionString(char * buf, size_t bufSize);
+    CHIP_ERROR GetSoftwareVersion(uint32_t & softwareVer) override;
     CHIP_ERROR GetBootReason(uint32_t & bootReason);
     CHIP_ERROR StoreBootReason(uint32_t bootReason);
 
