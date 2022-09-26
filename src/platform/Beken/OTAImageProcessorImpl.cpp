@@ -97,7 +97,7 @@ CHIP_ERROR OTAImageProcessorImpl::ConfirmCurrentImage()
     uint32_t currentVersion;
     uint32_t targetVersion = requestor->GetTargetVersion();
     ReturnErrorOnFailure(DeviceLayer::ConfigurationMgr().GetSoftwareVersion(currentVersion));
-    ChipLogError(SoftwareUpdate," %s %d,currentVersion %d \r\n",__FUNCTION__,__LINE__,DeviceLayer::ConfigurationMgr().GetSoftwareVersion(currentVersion));
+    ChipLogError(SoftwareUpdate," %s %d,currentVersion %lu \r\n",__FUNCTION__,__LINE__,currentVersion);
     if (currentVersion != targetVersion)
     {
         ChipLogError(SoftwareUpdate, "Current software version = %" PRIu32 ", expected software version = %" PRIu32, currentVersion,
@@ -360,7 +360,7 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessHeader(ByteSpan & block)
         {
            BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
         }
-        ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %d, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
+        ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %lu, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
         
         mHeaderParser.Clear();
     }
