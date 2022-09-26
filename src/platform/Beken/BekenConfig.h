@@ -67,6 +67,8 @@ public:
     static const Key kConfigKey_Spake2pIterationCount;
     static const Key kConfigKey_Spake2pSalt;
     static const Key kConfigKey_Spake2pVerifier;
+    static const Key kConfigKey_SoftwareVersion;
+    static const Key kConfigKey_SoftwareVersionString;
 
     // Counter keys
     static const Key kConfigKey_UniqueId;

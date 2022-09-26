@@ -80,6 +80,8 @@ const BekenConfig::Key BekenConfig::kConfigKey_OperationalDevicePrivateKey = { k
 const BekenConfig::Key BekenConfig::kConfigKey_RegulatoryLocation          = { kConfigNamespace_ChipConfig, "regulatory-location" };
 const BekenConfig::Key BekenConfig::kConfigKey_CountryCode                 = { kConfigNamespace_ChipConfig, "country-code" };
 const BekenConfig::Key BekenConfig::kConfigKey_Breadcrumb                  = { kConfigNamespace_ChipConfig, "breadcrumb" };
+const BekenConfig::Key BekenConfig::kConfigKey_SoftwareVersion             = { kConfigNamespace_ChipConfig, "software-version" };
+const BekenConfig::Key BekenConfig::kConfigKey_SoftwareVersionString       = { kConfigNamespace_ChipConfig, "software-version-str" };
 
 // Keys stored in the Chip-counters namespace
 const BekenConfig::Key BekenConfig::kCounterKey_RebootCount           = { kConfigNamespace_ChipCounters, "reboot-count" };
