@@ -710,8 +710,8 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
             return MapBLEError(-1);
         }
         adv_param.chnl_map      = 7;
-        adv_param.adv_intv_max  = 160;
-        adv_param.adv_intv_min  = 160;
+        adv_param.adv_intv_max  = adv_int_max;
+        adv_param.adv_intv_min  = adv_int_min;
         adv_param.own_addr_type = 0;
         adv_param.adv_type      = 0;
         adv_param.adv_prop      = 3;

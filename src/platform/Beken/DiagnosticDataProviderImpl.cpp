@@ -135,9 +135,27 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
     ifp->Name[Inet::InterfaceId::kMaxIfNameLength - 1] = '\0';
     ifp->name                                          = CharSpan::fromCharString(ifp->Name);
     ifp->type                                          = EMBER_ZCL_INTERFACE_TYPE_WI_FI;
-    ifp->offPremiseServicesReachableIPv4.SetNonNull(false);
-    ifp->offPremiseServicesReachableIPv6.SetNonNull(false);
+    ifp->isOperational = true;
+    ifp->offPremiseServicesReachableIPv4.SetNull();
+    ifp->offPremiseServicesReachableIPv6.SetNull();
     memcpy(ifp->MacAddress, netif->hwaddr, sizeof(netif->hwaddr));
+        // Set 48-bit IEEE MAC Address
+    ifp->hardwareAddress = ByteSpan(ifp->MacAddress, 6);
+    
+    if ((&netif->ip_addr) != 0)
+    {
+        memcpy(ifp->Ipv4AddressesBuffer[0], &netif->ip_addr, kMaxIPv4AddrSize);
+        ifp->Ipv4AddressSpans[0] = ByteSpan(ifp->Ipv4AddressesBuffer[0], kMaxIPv4AddrSize);
+        ifp->IPv4Addresses       = chip::app::DataModel::List<chip::ByteSpan>(ifp->Ipv4AddressSpans, 1);
+    }
+    
+    if (netif->ip6_addr != 0)
+    {
+        memcpy(ifp->Ipv6AddressesBuffer[0], netif->ip6_addr, kMaxIPv6AddrSize);
+        ifp->Ipv6AddressSpans[0] = ByteSpan(ifp->Ipv6AddressesBuffer[0], kMaxIPv6AddrSize);
+        ifp->IPv6Addresses       = chip::app::DataModel::List<chip::ByteSpan>(ifp->Ipv6AddressSpans, 1);
+    }
+    
     *netifpp = ifp;
     return CHIP_NO_ERROR;
 }
