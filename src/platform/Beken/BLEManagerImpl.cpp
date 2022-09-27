@@ -1060,11 +1060,11 @@ void BLEManagerImpl::beken_ble_cmd_cb(ble_cmd_t cmd, ble_cmd_param_t * param)
     case BLE_START_ADV: {
         uint32_t bleAdvTimeoutMs;
         sInstance.mFlags.Set(Flags::kBEKENBLEADVStarted);
-        // if (sInstance.mFlags.Has(Flags::kAdvertisingIsFastADV)){
-        bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_INTERVAL_CHANGE_TIME;
-        //}else{
-        //    bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_TIMEOUT;
-        //}
+        if (sInstance.mFlags.Has(Flags::kAdvertisingIsFastADV)){
+            bleAdvTimeoutMs = CHIP_DEVICE_CONFIG_BLE_ADVERTISING_INTERVAL_CHANGE_TIME;
+        }else{
+            bleAdvTimeoutMs = 15*60*1000;
+        }
         StartBleAdvTimeoutTimer(bleAdvTimeoutMs);
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
     }
