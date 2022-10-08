@@ -692,14 +692,14 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 
         if (mFlags.Has(Flags::kFastAdvertisingEnabled))
         {
-            adv_int_min = CHIP_DEVICE_CONFIG_BLE_FAST_ADVERTISING_INTERVAL_MIN;
-            adv_int_max = CHIP_DEVICE_CONFIG_BLE_FAST_ADVERTISING_INTERVAL_MAX;
+            adv_int_min = 40;
+            adv_int_max = 40;
             mFlags.Set(Flags::kAdvertisingIsFastADV);
         }
         else
         {
-            adv_int_min = CHIP_DEVICE_CONFIG_BLE_SLOW_ADVERTISING_INTERVAL_MIN;
-            adv_int_max = CHIP_DEVICE_CONFIG_BLE_SLOW_ADVERTISING_INTERVAL_MAX;
+            adv_int_min = 800;
+            adv_int_max = 800;
             mFlags.Clear(Flags::kAdvertisingIsFastADV);
         }
 
