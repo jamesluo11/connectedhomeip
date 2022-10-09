@@ -35,6 +35,7 @@ using namespace chip::DeviceLayer;
 namespace chip {
 
 namespace {
+        OTAImageHeader header;
 void HandleRestart(Layer * systemLayer, void * appState)
 {
     bk_reboot();
@@ -162,6 +163,13 @@ void OTAImageProcessorImpl::HandleFinalize(intptr_t context)
     dwFlagAddrOffset = partition_info->partition_length - (sizeof(ucFinishFlag) - 1);
 
     bk_write_ota_data_to_flash((char *) ucFinishFlag, dwFlagAddrOffset, (sizeof(ucFinishFlag) - 1));
+    BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion,header.mSoftwareVersion);
+
+    if(header.mSoftwareVersionString.data() != NULL)
+    {
+       BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
+    }
+    ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %lu, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
 
     imageProcessor->ReleaseBlock();
 
@@ -345,7 +353,7 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessHeader(ByteSpan & block)
 {
     if (mHeaderParser.IsInitialized())
     {
-        OTAImageHeader header;
+        header = {};
         CHIP_ERROR error = mHeaderParser.AccumulateAndDecode(block, header);
 
         // Needs more data to decode the header
@@ -353,15 +361,7 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessHeader(ByteSpan & block)
         ReturnErrorOnFailure(error);
 
         mParams.totalFileBytes = header.mPayloadSize;
-
-        BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion,header.mSoftwareVersion);
-
-        if(header.mSoftwareVersionString.data() != NULL)
-        {
-           BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
-        }
-        ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %lu, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
-        
+       
         mHeaderParser.Clear();
     }
 
