@@ -238,15 +238,15 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
         bk_read_ota_data_in_flash((char *) ucflag, dwFlagAddrOffset, (sizeof(ucFinishFlag) - 1));
         ChipLogProgress(SoftwareUpdate, "Block size is %d ,ucFinishFlag size len is %d", block.size(), sizeof(ucFinishFlag));
 
-        if ((0 == memcmp(ucflag, ucFinishFlag, (sizeof(ucFinishFlag) - 1))) &&
-            (0 == memcmp(tempBuf->version, imageProcessor->pOtaTgtHdr.version, sizeof(imageProcessor->pOtaTgtHdr.version))))
-        {
-            // os_free(tempBuf);
-            chip::Platform::MemoryFree(tempBuf);
-            tempBuf = NULL;
-            ChipLogError(SoftwareUpdate, "The version is is the same as the previous version");
-            return;
-        }
+        //if ((0 == memcmp(ucflag, ucFinishFlag, (sizeof(ucFinishFlag) - 1))) &&
+        //    (0 == memcmp(tempBuf->version, imageProcessor->pOtaTgtHdr.version, sizeof(imageProcessor->pOtaTgtHdr.version))))
+        //{
+        //    // os_free(tempBuf);
+        //    chip::Platform::MemoryFree(tempBuf);
+        //    tempBuf = NULL;
+        //    ChipLogError(SoftwareUpdate, "The version is is the same as the previous version");
+        //    return;
+        //}
 
         imageProcessor->readHeader = true;
         ChipLogProgress(SoftwareUpdate, "flash_data_offset is 0x%lx", imageProcessor->flash_data_offset);
