@@ -37,6 +37,8 @@ static_library("Beken") {
     # "DeviceInfoProviderImpl.h",
     "DiagnosticDataProviderImpl.cpp",
     "DiagnosticDataProviderImpl.h",
+    "FactoryDataProvider.cpp",
+    "FactoryDataProvider.h",
     "KeyValueStoreManagerImpl.cpp",
     "KeyValueStoreManagerImpl.h",
     "Logging.cpp",
@@ -55,6 +57,8 @@ static_library("Beken") {
     "${chip_root}/src/lib/dnssd:platform_header",
     "${chip_root}/src/setup_payload",
  ]
+
+  public = [ "${chip_root}/src/credentials/DeviceAttestationCredsProvider.h" ]
 
   public_deps = [
     "${chip_root}/src/crypto",

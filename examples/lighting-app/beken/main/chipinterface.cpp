@@ -35,6 +35,7 @@
 #include <platform/Beken/NetworkCommissioningDriver.h>
 #include <setup_payload/ManualSetupPayloadGenerator.h>
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
+#include <platform/Beken/FactoryDataProvider.h>
 
 #include <ota/OTAHelper.h>
 
@@ -183,11 +184,13 @@ extern "C" void _init(void)
 {
     ;
 }
+chip::DeviceLayer::FactoryDataProvider mFactoryDataProvider;
 
 static void InitServer(intptr_t context)
 {
     BekenAppServer::Init();
-    SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
+    SetCommissionableDataProvider(&mFactoryDataProvider);
+    SetDeviceAttestationCredentialsProvider(&mFactoryDataProvider);
     OTAHelpers::Instance().InitOTARequestor();
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
 }
