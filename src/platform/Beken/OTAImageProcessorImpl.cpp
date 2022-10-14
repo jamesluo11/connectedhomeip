@@ -163,13 +163,13 @@ void OTAImageProcessorImpl::HandleFinalize(intptr_t context)
     dwFlagAddrOffset = partition_info->partition_length - (sizeof(ucFinishFlag) - 1);
 
     bk_write_ota_data_to_flash((char *) ucFinishFlag, dwFlagAddrOffset, (sizeof(ucFinishFlag) - 1));
-    BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion,header.mSoftwareVersion);
+//    BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion,header.mSoftwareVersion);
 
-    if(header.mSoftwareVersionString.data() != NULL)
-    {
-       BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
-    }
-    ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %lu, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
+//    if(header.mSoftwareVersionString.data() != NULL)
+//    {
+//       BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
+//    }
+//    ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %lu, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
 
     imageProcessor->ReleaseBlock();
 
@@ -184,6 +184,10 @@ void OTAImageProcessorImpl::HandleAbort(intptr_t context)
         ChipLogError(SoftwareUpdate, "ImageProcessor context is null");
         return;
     }
+    
+    ChipLogProgress(SoftwareUpdate, "Erasing target partition...");
+    bk_erase_ota_data_in_flash();
+    ChipLogProgress(SoftwareUpdate, "Erasing target partition...");
 
     // Abort OTA procedure
 
@@ -302,9 +306,18 @@ void OTAImageProcessorImpl::HandleApply(intptr_t context)
 {
     auto * imageProcessor = reinterpret_cast<OTAImageProcessorImpl *>(context);
     ChipLogError(SoftwareUpdate, "Update completly,will reboot %s [%d] ", __FUNCTION__, __LINE__);
+    
+    BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion,header.mSoftwareVersion);
+
+    if(header.mSoftwareVersionString.data() != NULL)
+    {
+       BekenConfig::WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString,header.mSoftwareVersionString.data());
+    }
+    ChipLogError(SoftwareUpdate,"%s %d.mSoftwareVersion %lu, mSoftwareVersionString %s \r\n",__FUNCTION__,__LINE__,header.mSoftwareVersion,header.mSoftwareVersionString.data());
 
     // HandleApply is called after delayed action time seconds are elapsed, so it would be safe to schedule the restart
-    chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Milliseconds32(2 * 1000), HandleRestart, nullptr);
+    // chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Milliseconds32(2 * 1000), HandleRestart, nullptr);
+    chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Milliseconds32(10 * 1000), HandleRestart, nullptr);
 }
 
 CHIP_ERROR OTAImageProcessorImpl::SetBlock(ByteSpan & block)
