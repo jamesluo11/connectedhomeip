@@ -36,13 +36,7 @@ server cluster Identify = 3 {
     INT16U identifyTime = 0;
   }
 
-  request struct TriggerEffectRequest {
-    IdentifyEffectIdentifier effectIdentifier = 0;
-    IdentifyEffectVariant effectVariant = 1;
-  }
-
   command access(invoke: manage) Identify(IdentifyRequest): DefaultSuccess = 0;
-  command access(invoke: manage) TriggerEffect(TriggerEffectRequest): DefaultSuccess = 64;
 }
 
 server cluster Groups = 4 {
@@ -210,11 +204,11 @@ server cluster AccessControl = 31 {
     kAdminister = 5;
   }
 
-  struct AccessControlEntry {
-    Privilege privilege = 1;
-    AuthMode authMode = 2;
-    nullable int64u subjects[] = 3;
-    nullable Target targets[] = 4;
+  fabric_scoped struct AccessControlEntry {
+    fabric_sensitive Privilege privilege = 1;
+    fabric_sensitive AuthMode authMode = 2;
+    nullable fabric_sensitive int64u subjects[] = 3;
+    nullable fabric_sensitive Target targets[] = 4;
     fabric_idx fabricIndex = 254;
   }
 
@@ -224,12 +218,12 @@ server cluster AccessControl = 31 {
     nullable devtype_id deviceType = 2;
   }
 
-  struct ExtensionEntry {
-    octet_string<128> data = 1;
+  fabric_scoped struct ExtensionEntry {
+    fabric_sensitive octet_string<128> data = 1;
     fabric_idx fabricIndex = 254;
   }
 
-  info event access(read: administer) AccessControlEntryChanged = 0 {
+  fabric_sensitive info event access(read: administer) AccessControlEntryChanged = 0 {
     nullable node_id adminNodeID = 1;
     nullable INT16U adminPasscodeID = 2;
     ChangeTypeEnum changeType = 3;
@@ -237,7 +231,7 @@ server cluster AccessControl = 31 {
     fabric_idx fabricIndex = 254;
   }
 
-  info event access(read: administer) AccessControlExtensionChanged = 1 {
+  fabric_sensitive info event access(read: administer) AccessControlExtensionChanged = 1 {
     nullable node_id adminNodeID = 1;
     nullable INT16U adminPasscodeID = 2;
     ChangeTypeEnum changeType = 3;
@@ -393,7 +387,7 @@ server cluster OtaSoftwareUpdateRequestor = 42 {
     kDelayedOnUserConsent = 8;
   }
 
-  struct ProviderLocation {
+  fabric_scoped struct ProviderLocation {
     node_id providerNodeID = 1;
     endpoint_no endpoint = 2;
     fabric_idx fabricIndex = 254;
@@ -437,24 +431,6 @@ server cluster OtaSoftwareUpdateRequestor = 42 {
   }
 
   command AnnounceOtaProvider(AnnounceOtaProviderRequest): DefaultSuccess = 0;
-}
-
-server cluster UnitLocalization = 45 {
-  enum TempUnit : ENUM8 {
-    kFahrenheit = 0;
-    kCelsius = 1;
-    kKelvin = 2;
-  }
-
-  bitmap UnitLocalizationFeature : BITMAP32 {
-    kTemperatureUnit = 0x1;
-  }
-
-  readonly attribute command_id generatedCommandList[] = 65528;
-  readonly attribute command_id acceptedCommandList[] = 65529;
-  readonly attribute attrib_id attributeList[] = 65531;
-  readonly attribute bitmap32 featureMap = 65532;
-  readonly attribute int16u clusterRevision = 65533;
 }
 
 server cluster GeneralCommissioning = 48 {
@@ -734,24 +710,6 @@ server cluster GeneralDiagnostics = 51 {
   command access(invoke: manage) TestEventTrigger(TestEventTriggerRequest): DefaultSuccess = 0;
 }
 
-server cluster SoftwareDiagnostics = 52 {
-  bitmap SoftwareDiagnosticsFeature : BITMAP32 {
-    kWaterMarks = 0x1;
-  }
-
-  info event SoftwareFault = 0 {
-    INT64U id = 0;
-    optional CHAR_STRING name = 1;
-    optional OCTET_STRING faultRecording = 2;
-  }
-
-  readonly attribute command_id generatedCommandList[] = 65528;
-  readonly attribute command_id acceptedCommandList[] = 65529;
-  readonly attribute attrib_id attributeList[] = 65531;
-  readonly attribute bitmap32 featureMap = 65532;
-  readonly attribute int16u clusterRevision = 65533;
-}
-
 server cluster WiFiNetworkDiagnostics = 54 {
   enum AssociationFailureCause : ENUM8 {
     kUnknown = 0;
@@ -861,13 +819,13 @@ server cluster OperationalCredentials = 62 {
     kInvalidFabricIndex = 11;
   }
 
-  struct NOCStruct {
-    octet_string noc = 1;
-    nullable octet_string icac = 2;
+  fabric_scoped struct NOCStruct {
+    fabric_sensitive octet_string noc = 1;
+    nullable fabric_sensitive octet_string icac = 2;
     fabric_idx fabricIndex = 254;
   }
 
-  struct FabricDescriptor {
+  fabric_scoped struct FabricDescriptor {
     octet_string<65> rootPublicKey = 1;
     vendor_id vendorId = 2;
     fabric_id fabricId = 3;
@@ -962,13 +920,13 @@ server cluster GroupKeyManagement = 63 {
     kCacheAndSync = 1;
   }
 
-  struct GroupKeyMapStruct {
+  fabric_scoped struct GroupKeyMapStruct {
     group_id groupId = 1;
     int16u groupKeySetID = 2;
     fabric_idx fabricIndex = 254;
   }
 
-  struct GroupInfoMapStruct {
+  fabric_scoped struct GroupInfoMapStruct {
     group_id groupId = 1;
     endpoint_no endpoints[] = 2;
     optional char_string<16> groupName = 3;
@@ -1096,14 +1054,6 @@ endpoint 0 {
     ram      attribute clusterRevision default = 1;
   }
 
-  server cluster UnitLocalization {
-    callback attribute generatedCommandList;
-    callback attribute acceptedCommandList;
-    callback attribute attributeList;
-    ram      attribute featureMap;
-    ram      attribute clusterRevision default = 1;
-  }
-
   server cluster GeneralCommissioning {
     ram      attribute breadcrumb;
     callback attribute basicCommissioningInfo;
@@ -1137,14 +1087,6 @@ endpoint 0 {
     callback attribute networkInterfaces;
     callback attribute rebootCount;
     ram      attribute testEventTriggersEnabled;
-    callback attribute generatedCommandList;
-    callback attribute acceptedCommandList;
-    callback attribute attributeList;
-    ram      attribute featureMap;
-    ram      attribute clusterRevision default = 1;
-  }
-
-  server cluster SoftwareDiagnostics {
     callback attribute generatedCommandList;
     callback attribute acceptedCommandList;
     callback attribute attributeList;
