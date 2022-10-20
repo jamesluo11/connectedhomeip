@@ -65,3 +65,10 @@ compile_commands.json
 # log files
 *.log
 examples/thermostat/ameba/build
+
+third_party/ti_simplelink_sdk
+hird_party/silabs
+third_party/qpg_sdk
+third_party/nxp/k32w0_sdk
+third_party/infineon/psoc6/
+third_party/infineon/
