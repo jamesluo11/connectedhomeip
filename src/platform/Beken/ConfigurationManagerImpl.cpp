@@ -133,13 +133,21 @@ CHIP_ERROR ConfigurationManagerImpl::GetSoftwareVersionString(char * buf, size_t
 {
     char temp[kMaxSoftwareVersionStringLength + 1] ={0};
     size_t outLen = 0;
-    #if 1
+    #if 0
     memset(buf, 0, bufSize);
     
     BekenConfig::ReadConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString, temp,  sizeof(temp) - 1 , outLen);
     ChipLogError(DeviceLayer," %s %d GetSoftwareVersionString %s\r\n",__FUNCTION__,__LINE__,temp);
     ReturnErrorCodeIf(bufSize < strlen(temp), CHIP_ERROR_BUFFER_TOO_SMALL);
     ReturnErrorCodeIf(strlen(temp) > ConfigurationManager::kMaxSoftwareVersionStringLength, CHIP_ERROR_INTERNAL);
+    strcpy(buf, temp);
+    #endif
+    #if 1
+    uint32_t software_version = 0;
+    memset(buf, 0, bufSize);
+    BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_SoftwareVersion, software_version);
+    sprintf(temp, "%ld.0", software_version);
+    ReturnErrorCodeIf(bufSize < strlen(temp), CHIP_ERROR_BUFFER_TOO_SMALL);
     strcpy(buf, temp);
     #endif
     return CHIP_NO_ERROR;
