@@ -5238,7 +5238,7 @@
               "code": 64,
               "mfgCode": null,
               "source": "client",
-              "incoming": 1,
+              "incoming": 0,
               "outgoing": 0
             },
             {
@@ -5246,7 +5246,7 @@
               "code": 65,
               "mfgCode": null,
               "source": "client",
-              "incoming": 1,
+              "incoming": 0,
               "outgoing": 0
             },
             {
@@ -5254,7 +5254,7 @@
               "code": 66,
               "mfgCode": null,
               "source": "client",
-              "incoming": 1,
+              "incoming": 0,
               "outgoing": 0
             }
           ],
@@ -5323,7 +5323,7 @@
               "mfgCode": null,
               "side": "server",
               "type": "boolean",
-              "included": 1,
+              "included": 0,
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
@@ -5339,7 +5339,7 @@
               "mfgCode": null,
               "side": "server",
               "type": "int16u",
-              "included": 1,
+              "included": 0,
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
@@ -5355,7 +5355,7 @@
               "mfgCode": null,
               "side": "server",
               "type": "int16u",
-              "included": 1,
+              "included": 0,
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
@@ -5371,7 +5371,7 @@
               "mfgCode": null,
               "side": "server",
               "type": "OnOffStartUpOnOff",
-              "included": 1,
+              "included": 0,
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
