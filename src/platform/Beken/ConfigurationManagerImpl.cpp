@@ -87,6 +87,19 @@ CHIP_ERROR ConfigurationManagerImpl::Init()
         SuccessOrExit(err);
     }
 
+    if (!BekenConfig::ConfigValueExists(BekenConfig::kConfigKey_SoftwareVersion))
+    {
+        WriteConfigValue(BekenConfig::kConfigKey_SoftwareVersion, (uint32_t)0);
+        SuccessOrExit(err);
+    }
+
+    if (!BekenConfig::ConfigValueExists(BekenConfig::kConfigKey_SoftwareVersionString))
+    {
+        WriteConfigValueStr(BekenConfig::kConfigKey_SoftwareVersionString, "0.0");
+        SuccessOrExit(err);
+    }
+
+
     // Initialize the generic implementation base class.
     err = Internal::GenericConfigurationManagerImpl<BekenConfig>::Init();
     SuccessOrExit(err);
