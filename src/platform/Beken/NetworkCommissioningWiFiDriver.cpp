@@ -289,17 +289,9 @@ void BekenWiFiDriver::OnScanWiFiNetworkDone()
     int scan_rst_ap_num            = 0;
     BK_LOG_ON_ERR(bk_wifi_scan_get_result(&scan_result));
     scan_rst_ap_num = scan_result.ap_num;
-    if (scan_rst_ap_num < 2) // beken scan result > = 1
-    {
-        ChipLogProgress(NetworkProvisioning, "NULL AP\r\n");
-        GetInstance().mpScanCallback->OnFinished(Status::kNetworkNotFound, CharSpan(), nullptr);
-    }
-    else
-    {
-        ChipLogProgress(NetworkProvisioning, "AP num = %d\r\n", scan_rst_ap_num);
-        BKScanResponseIterator iter(scan_rst_ap_num, &scan_result);
-        GetInstance().mpScanCallback->OnFinished(Status::kSuccess, CharSpan(), &iter);
-    }
+    ChipLogProgress(NetworkProvisioning, "AP num = %d\r\n", scan_rst_ap_num);
+    BKScanResponseIterator iter(scan_rst_ap_num, &scan_result);
+    GetInstance().mpScanCallback->OnFinished(Status::kSuccess, CharSpan(), &iter);
     GetInstance().mpScanCallback = nullptr;
     bk_wifi_scan_free_result(&scan_result);
 }

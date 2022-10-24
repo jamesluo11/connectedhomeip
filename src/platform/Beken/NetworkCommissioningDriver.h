@@ -42,6 +42,7 @@ public:
         {
             return false;
         }
+        ChipLogProgress(NetworkProvisioning, "Get AP num %d = %s\r\n", mIternum + 1, mpScanResults->aps[mIternum].ssid);
         uint8_t ssidlenth = strlen(mpScanResults->aps[mIternum].ssid);
         item.security.SetRaw(NC_SECURITYCONVERT(mpScanResults->aps[mIternum].security));
         item.ssidLen  = ssidlenth;
@@ -59,7 +60,7 @@ public:
 private:
     const size_t mSize;
     const wifi_scan_result_t * mpScanResults;
-    size_t mIternum = 1;
+    size_t mIternum = 0;
 };
 
 class BekenWiFiDriver final : public WiFiDriver
