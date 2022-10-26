@@ -120,6 +120,24 @@ CHIP_ERROR BekenConfig::ReadConfigValue(Key key, bool & val)
         return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
 }
 
+CHIP_ERROR BekenConfig::ReadConfigValue(Key key, uint16_t & val)
+{
+    uint32_t success    = 0;
+    uint32_t out_length = 0;
+    uint32_t temp_data  = 0;
+
+    success = bk_read_data(key.Namespace, key.Name, (char *) &temp_data, sizeof(uint16_t), &out_length);
+
+    if (kNoErr != success)
+        ChipLogProgress(DeviceLayer, "bk_read_data: %s  %s failed\n", (char *) key.Namespace, (char *) key.Name);
+    val = temp_data;
+
+    if (kNoErr == success)
+        return CHIP_NO_ERROR;
+    else
+        return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+}
+
 CHIP_ERROR BekenConfig::ReadConfigValue(Key key, uint32_t & val)
 {
     uint32_t success    = 0;
@@ -218,6 +236,18 @@ CHIP_ERROR BekenConfig::WriteConfigValue(Key key, bool val)
     if (kNoErr != success)
         ChipLogError(DeviceLayer, "bk_write_data: %s  %s  %s failed\n", (char *) key.Namespace, (char *) key.Name,
                      value ? "true" : "false");
+
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR BekenConfig::WriteConfigValue(Key key, uint16_t val)
+{
+    uint32_t success = 0;
+
+    success = bk_write_data(key.Namespace, key.Name, (char *) &val, sizeof(val));
+    if (kNoErr != success)
+        ChipLogError(DeviceLayer, "bk_write_data: %s  %s = %lu(0x%lx) failed\n", (char *) key.Namespace, (char *) key.Name, val,
+                     val);
 
     return CHIP_NO_ERROR;
 }

@@ -15,8 +15,6 @@
  *    limitations under the License.
  */
 
-#include "FactoryDataProvider.h"
-
 #include <crypto/CHIPCryptoPAL.h>
 #include <lib/core/CHIPError.h>
 #include <lib/support/Base64.h>
@@ -27,6 +25,9 @@
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/ConnectivityManager.h>
 #include <platform/internal/GenericConfigurationManagerImpl.ipp>
+
+#include <platform/Beken/BekenConfig.h>
+#include <platform/Beken/FactoryDataProvider.h>
 
 using namespace ::chip::DeviceLayer::Internal;
 
@@ -65,6 +66,7 @@ CHIP_ERROR FactoryDataProvider::GetCertificationDeclaration(MutableByteSpan & ou
     //-> dac_origin_vendor_id is not present
     //-> dac_origin_product_id is not present
 
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     const uint8_t kCdForAllExamples[246] = {
         0x30, 0x81, 0xf3, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01,
         0x07, 0x02, 0xa0, 0x81, 0xe5, 0x30, 0x81, 0xe2, 0x02, 0x01, 0x03, 0x31,
@@ -90,6 +92,13 @@ CHIP_ERROR FactoryDataProvider::GetCertificationDeclaration(MutableByteSpan & ou
     };
 
     return CopySpanToMutableSpan(ByteSpan(kCdForAllExamples), outBuffer);
+#else
+    uint8_t buf[300] = { 0 };
+    size_t bufLen = 0;
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueBin(BekenConfig::kConfigKey_CertDeclaration, buf, 300, bufLen));
+    ReturnErrorCodeIf(300 == bufLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+    return CopySpanToMutableSpan(ByteSpan(buf, bufLen), outBuffer);
+#endif
 }
 
 CHIP_ERROR FactoryDataProvider::GetFirmwareInformation(MutableByteSpan & out_firmware_info_buffer)
@@ -104,6 +113,7 @@ CHIP_ERROR FactoryDataProvider::GetDeviceAttestationCert(MutableByteSpan & outBu
 {
     // TODO: DAC is Hardcoded temporarily, will read from flash/efuse in the future
 
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     const uint8_t kDacCert[488] = {
         0x30, 0x82, 0x01, 0xe4, 0x30, 0x82, 0x01, 0x8b, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0x02, 0x08, 0x5d, 0x2f, 0x83, 0xa0, 0x0b, 0xd0, 0x79, 0x14, 0x30,
@@ -148,12 +158,20 @@ CHIP_ERROR FactoryDataProvider::GetDeviceAttestationCert(MutableByteSpan & outBu
         0x7e, 0x39, 0x96, 0x88, 0x3a, 0x6f, 0x02, 0xb3
     };
     return CopySpanToMutableSpan(ByteSpan(kDacCert), outBuffer);
+#else
+    uint8_t buf[500] = { 0 };
+    size_t bufLen = 0;
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueBin(BekenConfig::kConfigKey_DACCert, buf, 500, bufLen));
+    ReturnErrorCodeIf(500 == bufLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+    return CopySpanToMutableSpan(ByteSpan(buf, bufLen), outBuffer);
+#endif
 }
 
 CHIP_ERROR FactoryDataProvider::GetProductAttestationIntermediateCert(MutableByteSpan & outBuffer)
 {
     // TODO: PAI is Hardcoded temporarily, will read from flash/efuse in the future
 
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     const uint8_t kPaiCert[465] = {
         0x30, 0x82, 0x01, 0xcd, 0x30, 0x82, 0x01, 0x74, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0x02, 0x08, 0x3e, 0xf1, 0xc5, 0xd3, 0xf1, 0x2e, 0xfb, 0xd7, 0x30,
@@ -196,12 +214,20 @@ CHIP_ERROR FactoryDataProvider::GetProductAttestationIntermediateCert(MutableByt
         0xeb, 0xaa, 0xea, 0x55, 0xf0, 0x79, 0xeb, 0x88, 0xd3
     };
     return CopySpanToMutableSpan(ByteSpan{ kPaiCert }, outBuffer);
+#else
+    uint8_t buf[500] = { 0 };
+    size_t bufLen = 0;
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueBin(BekenConfig::kConfigKey_PAICert, buf, 500, bufLen));
+    ReturnErrorCodeIf(500 == bufLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+    return CopySpanToMutableSpan(ByteSpan(buf, bufLen), outBuffer);
+#endif
 }
 
 CHIP_ERROR FactoryDataProvider::SignWithDeviceAttestationKey(const ByteSpan & messageToSign, MutableByteSpan & outSignBuffer)
 {
     // TODO: DAC keys are Hardcoded temporarily, will read from flash/efuse in the future
 
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     const uint8_t kDacPublicKey[65] = {
         0x04, 0x8b, 0xf3, 0x8a, 0x5a, 0xab, 0x86, 0xa6, 0x55, 0x78, 0xb7, 0x13, 0x62, 0x57, 0x08,
         0x12, 0xef, 0xb4, 0xf5, 0xd3, 0x3b, 0xa3, 0x01, 0x02, 0xaf, 0x6f, 0xf8, 0x6e, 0xb9, 0x4f,
@@ -215,6 +241,16 @@ CHIP_ERROR FactoryDataProvider::SignWithDeviceAttestationKey(const ByteSpan & me
         0x09, 0x4e, 0xe7, 0x06, 0xec, 0x4b, 0x48, 0xbb, 0xb9, 0x1c, 0x8b, 0x4c, 0xf4, 0xba, 0x6e,
         0x75, 0x67
     };
+    size_t kDacPublicKeyLen = 65, kDacPrivateKeyLen = 32;
+#else
+    size_t kDacPublicKeyLen = 0, kDacPrivateKeyLen = 0;
+    uint8_t kDacPrivateKey[100] = { 0 }, kDacPublicKey[100] = { 0 };
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueBin(BekenConfig::kConfigKey_DACPublicKey, kDacPublicKey, 100, kDacPublicKeyLen));
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueBin(BekenConfig::kConfigKey_DACPrivateKey, kDacPrivateKey, 100, kDacPrivateKeyLen));
+    ReturnErrorCodeIf(100 == kDacPrivateKeyLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+    ReturnErrorCodeIf(100 == kDacPublicKeyLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+
+#endif
 
     Crypto::P256ECDSASignature signature;
     Crypto::P256Keypair keypair;
@@ -225,7 +261,7 @@ CHIP_ERROR FactoryDataProvider::SignWithDeviceAttestationKey(const ByteSpan & me
 
     // In a non-exemplary implementation, the public key is not needed here. It is used here merely because
     // Crypto::P256Keypair is only (currently) constructable from raw keys if both private/public keys are present.
-    ReturnErrorOnFailure(LoadKeypairFromRaw(ByteSpan(kDacPrivateKey), ByteSpan(kDacPublicKey), keypair));
+    ReturnErrorOnFailure( LoadKeypairFromRaw(ByteSpan(kDacPrivateKey, kDacPrivateKeyLen), ByteSpan(kDacPublicKey, kDacPublicKeyLen), keypair));
     ReturnErrorOnFailure(keypair.ECDSA_sign_msg(messageToSign.data(), messageToSign.size(), signature));
 
     return CopySpanToMutableSpan(ByteSpan{ signature.ConstBytes(), signature.Length() }, outSignBuffer);
@@ -234,20 +270,29 @@ CHIP_ERROR FactoryDataProvider::SignWithDeviceAttestationKey(const ByteSpan & me
 CHIP_ERROR FactoryDataProvider::GetSetupDiscriminator(uint16_t & setupDiscriminator)
 {
     CHIP_ERROR err = CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
-    uint32_t val;
+    uint16_t val;
 
 #if defined(CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR) && CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR
     val = CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR;
     err = CHIP_NO_ERROR;
+#else
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_SetupDiscriminator, val));
 #endif // defined(CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR) && CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR
 
     setupDiscriminator = static_cast<uint16_t>(val);
+    VerifyOrReturnLogError(setupDiscriminator <= kMaxDiscriminatorValue, CHIP_ERROR_INVALID_ARGUMENT);
 
     return err;
 }
 
 CHIP_ERROR FactoryDataProvider::SetSetupDiscriminator(uint16_t setupDiscriminator)
 {
+#if defined(CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR) && CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR
+    CHIP_ERROR err = CHIP_ERROR_NOT_IMPLEMENTED;
+#else
+    ReturnErrorOnFailure(BekenConfig::WriteConfigValue(BekenConfig::kConfigKey_SetupDiscriminator, setupDiscriminator));
+#endif // defined(CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR) && CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR
+
     return CHIP_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -258,6 +303,8 @@ CHIP_ERROR FactoryDataProvider::GetSpake2pIterationCount(uint32_t & iterationCou
 #if defined(CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_ITERATION_COUNT) && CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_ITERATION_COUNT
     iterationCount = CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_ITERATION_COUNT;
     err            = CHIP_NO_ERROR;
+#else
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_Spake2pIterationCount, iterationCount));
 #endif // defined(CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_ITERATION_COUNT) && CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_ITERATION_COUNT
 
     return err;
@@ -276,6 +323,8 @@ CHIP_ERROR FactoryDataProvider::GetSpake2pSalt(MutableByteSpan & saltBuf)
     ReturnErrorCodeIf(saltB64Len > sizeof(saltB64), CHIP_ERROR_BUFFER_TOO_SMALL);
     memcpy(saltB64, CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_SALT, saltB64Len);
     err = CHIP_NO_ERROR;
+#else
+    err = BekenConfig::ReadConfigValueStr(BekenConfig::kConfigKey_Spake2pSalt, saltB64, sizeof(saltB64), saltB64Len);
 #endif // defined(CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_SALT)
 
     ReturnErrorOnFailure(err);
@@ -302,6 +351,8 @@ CHIP_ERROR FactoryDataProvider::GetSpake2pVerifier(MutableByteSpan & verifierBuf
     ReturnErrorCodeIf(verifierB64Len > sizeof(verifierB64), CHIP_ERROR_BUFFER_TOO_SMALL);
     memcpy(verifierB64, CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_VERIFIER, verifierB64Len);
     err = CHIP_NO_ERROR;
+#else
+    err = BekenConfig::ReadConfigValueStr(BekenConfig::kConfigKey_Spake2pVerifier, verifierB64, sizeof(verifierB64), verifierB64Len);
 #endif // defined(CHIP_DEVICE_CONFIG_USE_TEST_SPAKE2P_VERIFIER)
 
     ReturnErrorOnFailure(err);
@@ -320,6 +371,8 @@ CHIP_ERROR FactoryDataProvider::GetSetupPasscode(uint32_t & setupPasscode)
 #if defined(CHIP_DEVICE_CONFIG_USE_TEST_SETUP_PIN_CODE) && CHIP_DEVICE_CONFIG_USE_TEST_SETUP_PIN_CODE
     setupPasscode = CHIP_DEVICE_CONFIG_USE_TEST_SETUP_PIN_CODE;
     err           = CHIP_NO_ERROR;
+#else
+    err = BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_SetupPinCode, setupPasscode);
 #endif // defined(CHIP_DEVICE_CONFIG_USE_TEST_SETUP_PIN_CODE) && CHIP_DEVICE_CONFIG_USE_TEST_SETUP_PIN_CODE
 
     return err;
@@ -332,27 +385,47 @@ CHIP_ERROR FactoryDataProvider::SetSetupPasscode(uint32_t setupPasscode)
 
 CHIP_ERROR FactoryDataProvider::GetVendorName(char * buf, size_t bufSize)
 {
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     ReturnErrorCodeIf(bufSize < sizeof(CHIP_DEVICE_CONFIG_DEVICE_VENDOR_NAME), CHIP_ERROR_BUFFER_TOO_SMALL);
     strcpy(buf, CHIP_DEVICE_CONFIG_DEVICE_VENDOR_NAME);
+#else
+    size_t bufSizeOut;
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueStr(BekenConfig::kConfigKey_VendorName, buf, bufSize, bufSizeOut));
+    ReturnErrorCodeIf(bufSize < bufSizeOut, CHIP_ERROR_BUFFER_TOO_SMALL);
+#endif
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR FactoryDataProvider::GetVendorId(uint16_t & vendorId)
 {
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     vendorId = static_cast<uint16_t>(CHIP_DEVICE_CONFIG_DEVICE_VENDOR_ID);
+#else
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_VendorId, vendorId));
+#endif
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR FactoryDataProvider::GetProductName(char * buf, size_t bufSize)
 {
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     ReturnErrorCodeIf(bufSize < sizeof(CHIP_DEVICE_CONFIG_DEVICE_PRODUCT_NAME), CHIP_ERROR_BUFFER_TOO_SMALL);
     strcpy(buf, CHIP_DEVICE_CONFIG_DEVICE_PRODUCT_NAME);
+#else
+    size_t bufSizeOut;
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueStr(BekenConfig::kConfigKey_ProductName, buf, bufSize, bufSizeOut));
+    ReturnErrorCodeIf(bufSize < bufSizeOut, CHIP_ERROR_BUFFER_TOO_SMALL);
+#endif
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR FactoryDataProvider::GetProductId(uint16_t & productId)
 {
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
     productId = static_cast<uint16_t>(CHIP_DEVICE_CONFIG_DEVICE_PRODUCT_ID);
+#else
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValue(BekenConfig::kConfigKey_ProductId, productId));
+#endif
     return CHIP_NO_ERROR;
 }
 
@@ -361,6 +434,7 @@ CHIP_ERROR FactoryDataProvider::GetSerialNumber(char * buf, size_t bufSize)
     ChipError err       = CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
     size_t serialNumLen = 0; // without counting null-terminator
 
+#if CHIP_DEVICE_CONFIG_ENABLE_TEST_SETUP_PARAMS
 #ifdef CHIP_DEVICE_CONFIG_TEST_SERIAL_NUMBER
     if (CHIP_DEVICE_CONFIG_TEST_SERIAL_NUMBER[0] != 0)
     {
@@ -373,7 +447,12 @@ CHIP_ERROR FactoryDataProvider::GetSerialNumber(char * buf, size_t bufSize)
 
     ReturnErrorCodeIf(serialNumLen >= bufSize, CHIP_ERROR_BUFFER_TOO_SMALL);
     ReturnErrorCodeIf(buf[serialNumLen] != 0, CHIP_ERROR_INVALID_STRING_LENGTH);
+#else
+    ReturnErrorOnFailure(BekenConfig::ReadConfigValueStr(BekenConfig::kConfigKey_SerialNum, buf, bufSize, serialNumLen));
+    ReturnErrorCodeIf(bufSize < serialNumLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+    err = CHIP_NO_ERROR;
 
+#endif
     return err;
 }
 
