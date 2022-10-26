@@ -96,11 +96,13 @@ public:
 
     // Config value accessors.
     static CHIP_ERROR ReadConfigValue(Key key, bool & val);
+    static CHIP_ERROR ReadConfigValue(Key key, uint16_t & val);
     static CHIP_ERROR ReadConfigValue(Key key, uint32_t & val);
     static CHIP_ERROR ReadConfigValue(Key key, uint64_t & val);
     static CHIP_ERROR ReadConfigValueStr(Key key, char * buf, size_t bufSize, size_t & outLen);
     static CHIP_ERROR ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSize, size_t & outLen);
     static CHIP_ERROR WriteConfigValue(Key key, bool val);
+    static CHIP_ERROR WriteConfigValue(Key key, uint16_t val);
     static CHIP_ERROR WriteConfigValue(Key key, uint32_t val);
     static CHIP_ERROR WriteConfigValue(Key key, uint64_t val);
     static CHIP_ERROR WriteConfigValueStr(Key key, const char * str);
