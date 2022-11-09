@@ -23,7 +23,6 @@
  *
  **/
 
-#include "BkDriverGpio.h"
 #include "DeviceCallbacks.h"
 
 #include <common/CHIPDeviceManager.h>
@@ -36,9 +35,9 @@
 #include <app/util/basic-types.h>
 #include <app/util/util.h>
 #include <lib/dnssd/Advertiser.h>
-#include <support/CodeUtils.h>
-#include <support/logging/CHIPLogging.h>
-#include <support/logging/Constants.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
+#include <lib/support/logging/Constants.h>
 
 static const char * TAG = "app-devicecallbacks";
 
@@ -80,11 +79,6 @@ void AppDeviceCallbacks::OnOnOffPostAttributeChangeCallback(EndpointId endpointI
 
     // At this point we can assume that value points to a bool value.
     // statusLED1.Set(*value);
-    if(*value){
-        BkGpioOutputLow(GPIO6);
-    } else {
-        BkGpioOutputHigh(GPIO6);
-    }
 
 exit:
     return;
