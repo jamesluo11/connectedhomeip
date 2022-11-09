@@ -38,8 +38,8 @@ public:
         static DeviceCallbacksDelegate instance;
         return instance;
     }
-    virtual void OnIPv4ConnectivityEstablished() {}
-    virtual void OnIPv4ConnectivityLost() {}
+    void OnIPv4ConnectivityEstablished() {}
+    void OnIPv4ConnectivityLost() {}
     void SetAppDelegate(DeviceCallbacksDelegate * delegate) { mDelegate = delegate; }
     DeviceCallbacksDelegate * GetAppDelegate() { return mDelegate; }
 

@@ -21,10 +21,10 @@ assert(chip_device_platform == "beken")
 static_library("Beken") {
   sources = [
     "../SingletonConfigurationManager.cpp",
-    "BekenConfig.cpp",
-    "BekenConfig.h",
     "BLEManagerImpl.cpp",
     "BLEManagerImpl.h",
+    "BekenConfig.cpp",
+    "BekenConfig.h",
     "CHIPDevicePlatformConfig.h",
     "CHIPDevicePlatformEvent.h",
     "CHIPMem-Platform.cpp",
@@ -33,8 +33,8 @@ static_library("Beken") {
     "ConnectivityManagerImpl.cpp",
     "ConnectivityManagerImpl.h",
 
-    # "DeviceInfoProviderImpl.cpp",
-    # "DeviceInfoProviderImpl.h",
+    #"DeviceInfoProviderImpl.cpp",
+    #"DeviceInfoProviderImpl.h",
     "DiagnosticDataProviderImpl.cpp",
     "DiagnosticDataProviderImpl.h",
     "FactoryDataProvider.cpp",
@@ -43,22 +43,26 @@ static_library("Beken") {
     "KeyValueStoreManagerImpl.h",
     "Logging.cpp",
     "LwIPCoreLock.cpp",
+    "NetworkCommissioningWiFiDriver.cpp",
     "OTAImageProcessorImpl.cpp",
     "OTAImageProcessorImpl.h",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
-    "SoftwareUpdateManagerImpl.h",
     "SystemPlatformConfig.h",
     "SystemTimeSupport.cpp",
-    "NetworkCommissioningWiFiDriver.cpp",
   ]
 
-  deps = [ 
+  deps = [
     "${chip_root}/src/lib/dnssd:platform_header",
     "${chip_root}/src/setup_payload",
- ]
+  ]
 
-  public = [ "${chip_root}/src/credentials/DeviceAttestationCredsProvider.h" ]
+  public = [ 
+    "${chip_root}/src/credentials/DeviceAttestationCredsProvider.h",
+    "${chip_root}/src/platform/Beken/OTAImageProcessorImpl.h",
+    "${chip_root}/src/platform/Beken/BekenConfig.h",
+    "${chip_root}/src/platform/Beken/FactoryDataProvider.h",
+  ]
 
   public_deps = [
     "${chip_root}/src/crypto",

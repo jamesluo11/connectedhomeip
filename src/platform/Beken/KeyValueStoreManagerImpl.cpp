@@ -22,7 +22,7 @@
  */
 /* this file behaves like a config.h, comes first */
 #include <platform/KeyValueStoreManager.h>
-#include <support/CodeUtils.h>
+#include <lib/support/CodeUtils.h>
 #include "error.h"
 #include "flash_namespace_value.h"
 

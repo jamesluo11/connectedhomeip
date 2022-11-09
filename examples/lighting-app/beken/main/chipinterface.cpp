@@ -15,9 +15,7 @@
  *    limitations under the License.
  */
 
-#include "BkDriverGpio.h"
 #include "DeviceCallbacks.h"
-#include "Server.h"
 
 #include <common/BekenAppServer.h>
 #include <common/CHIPDeviceManager.h>
@@ -30,6 +28,7 @@
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/network-commissioning/network-commissioning.h>
 #include <app/server/OnboardingCodesUtil.h>
+#include <app/server/Server.h>
 #include <lib/support/ErrorStr.h>
 #include <platform/Beken/BekenConfig.h>
 #include <platform/Beken/NetworkCommissioningDriver.h>
@@ -201,13 +200,6 @@ extern "C" void ChipTest(void)
     CHIP_ERROR err = CHIP_NO_ERROR;
 
     // initPref();
-
-    BkGpioInitialize(GPIO6, OUTPUT_NORMAL);
-    BkGpioInitialize(GPIO7, OUTPUT_NORMAL);
-    BkGpioInitialize(GPIO8, OUTPUT_NORMAL);
-    BkGpioOutputHigh(GPIO6);
-    BkGpioOutputHigh(GPIO7);
-    BkGpioOutputHigh(GPIO8);
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
     err                           = deviceMgr.Init(&EchoCallbacks); // start the CHIP task
