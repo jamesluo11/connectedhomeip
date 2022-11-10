@@ -29,8 +29,8 @@
 #include <platform/ConfigurationManager.h>
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/internal/GenericConfigurationManagerImpl.ipp>
-#include <support/CodeUtils.h>
-#include <support/logging/CHIPLogging.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 #include "matter_pal.h"
 

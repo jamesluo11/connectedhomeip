@@ -150,9 +150,6 @@ private:
     friend ConnectivityManagerImpl & ConnectivityMgrImpl(void);
 
     static ConnectivityManagerImpl sInstance;
-    static void WiFiStationConnectedHandler();
-    static int wlan_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data);
-    static int netif_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data);
     void IpConnectedEventNotify(void);
 };
 

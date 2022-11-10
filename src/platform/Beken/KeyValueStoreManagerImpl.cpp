@@ -23,7 +23,7 @@
 /* this file behaves like a config.h, comes first */
 #include "matter_pal.h"
 #include <platform/KeyValueStoreManager.h>
-#include <support/CodeUtils.h>
+#include <lib/support/CodeUtils.h>
 
 namespace chip {
 namespace DeviceLayer {

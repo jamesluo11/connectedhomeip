@@ -39,8 +39,8 @@
 #endif
 
 #include <platform/internal/BLEManager.h>
-#include <support/CodeUtils.h>
-#include <support/logging/CHIPLogging.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 #include <lwip/dns.h>
 #include <lwip/ip_addr.h>
@@ -62,6 +62,9 @@ namespace DeviceLayer {
 
 ConnectivityManagerImpl ConnectivityManagerImpl::sInstance;
 NetworkCommissioning::BekenWiFiDriver::WiFiNetwork mWifiNetconf;
+
+static int wlan_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data);
+static int netif_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data);
 
 // ==================== ConnectivityManager Platform Internal Methods ====================
 
@@ -170,8 +173,8 @@ CHIP_ERROR ConnectivityManagerImpl::_SetWiFiStationMode(WiFiStationMode val)
 
     if (mWiFiStationMode == kWiFiStationMode_Disabled && val == kWiFiStationMode_Enabled)
     {
-        BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_WIFI, EVENT_ID_ALL, ConnectivityManagerImpl().wlan_event_cb, NULL));
-        BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_NETIF, EVENT_ID_ALL, ConnectivityManagerImpl().netif_event_cb, NULL));
+        BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_WIFI, EVENT_ID_ALL, wlan_event_cb, NULL));
+        BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_NETIF, EVENT_ID_ALL, netif_event_cb, NULL));
         ChangeWiFiStationState(kWiFiStationState_Connecting);
     }
 
@@ -278,7 +281,7 @@ void ConnectivityManagerImpl::_OnWiFiStationProvisionChange()
 }
 
 // ==================== ConnectivityManager Private Methods ====================
-void ConnectivityManagerImpl::WiFiStationConnectedHandler()
+static void WiFiStationConnectedHandler()
 {
     ChipDeviceEvent event;
     memset(&event, 0, sizeof(event));
@@ -288,7 +291,7 @@ void ConnectivityManagerImpl::WiFiStationConnectedHandler()
 
 static bool stationConnected = false;
 
-int ConnectivityManagerImpl::netif_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data)
+static int netif_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data)
 {
     ssid_key_save_t wpa_save = { { 0 } };
     switch (event_id)
@@ -306,7 +309,7 @@ int ConnectivityManagerImpl::netif_event_cb(void * arg, event_module_t event_mod
     return BK_OK;
 }
 
-int ConnectivityManagerImpl::wlan_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data)
+static int wlan_event_cb(void * arg, event_module_t event_module, int event_id, void * event_data)
 {
     switch (event_id)
     {
@@ -393,8 +396,8 @@ void ConnectivityManagerImpl::DriveStationState()
                 strncpy(sta_config.password, mWifiNetconf.credentials, mWifiNetconf.credentialsLen);
                 BK_LOG_ON_ERR(bk_wifi_sta_set_config(&sta_config));
                 BK_LOG_ON_ERR(bk_wifi_sta_start());
-                BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_WIFI, EVENT_ID_ALL, ConnectivityManagerImpl().wlan_event_cb, NULL));
-                BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_NETIF, EVENT_ID_ALL, ConnectivityManagerImpl().netif_event_cb, NULL));
+                BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_WIFI, EVENT_ID_ALL, wlan_event_cb, NULL));
+                BK_LOG_ON_ERR(bk_event_register_cb(EVENT_MOD_NETIF, EVENT_ID_ALL, netif_event_cb, NULL));
                 BK_LOG_ON_ERR(bk_wifi_sta_connect());
                 ChangeWiFiStationState(kWiFiStationState_Connecting);
             }
