@@ -45,7 +45,6 @@
 
 #include <lib/support/BitFlags.h>
 
-#include <components/event.h>
 
 namespace chip {
 

@@ -47,7 +47,7 @@
 #include <lwip/nd6.h>
 #include <lwip/netif.h>
 
-#include "NetworkCommissioningDriver.h"
+#include <platform/Beken/NetworkCommissioningDriver.h>
 
 #include "matter_pal.h"
 #include <components/netif.h>

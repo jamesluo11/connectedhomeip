@@ -36,6 +36,29 @@ constexpr char kWiFiSSIDKeyName[]        = "wifi-ssid";
 constexpr char kWiFiCredentialsKeyName[] = "wifi-pass";
 } // namespace
 
+
+bool BKScanResponseIterator::Next(WiFiScanResponse & item)
+{
+    wifi_scan_result_t * scanResults = (wifi_scan_result_t *) mpScanResults;
+    if (mIternum >= mSize)
+    {
+        return false;
+    }
+    ChipLogProgress(NetworkProvisioning, "Get AP num %d = %s\r\n", mIternum + 1, scanResults->aps[mIternum].ssid);
+    uint8_t ssidlenth = strlen(scanResults->aps[mIternum].ssid);
+    item.security.SetRaw(NC_SECURITYCONVERT(scanResults->aps[mIternum].security));
+    item.ssidLen  = ssidlenth;
+    item.channel  = scanResults->aps[mIternum].channel;
+    item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
+    item.rssi     = scanResults->aps[mIternum].rssi;
+    memcpy(item.ssid, scanResults->aps[mIternum].ssid, ssidlenth);
+    memcpy(item.bssid, scanResults->aps[mIternum].bssid, 6);
+
+    mIternum++;
+    return true;
+}
+
+
 CHIP_ERROR BekenWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
     CHIP_ERROR err;

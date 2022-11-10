@@ -27,6 +27,7 @@
 #include <os/os.h>
 
 #include <components/system.h>
+#include <components/event.h>
 
 #include <modules/wifi.h>
 #include <modules/wifi_types.h>

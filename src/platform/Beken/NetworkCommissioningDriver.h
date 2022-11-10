@@ -16,7 +16,6 @@
  */
 
 #pragma once
-#include "matter_pal.h"
 #include <platform/NetworkCommissioning.h>
 
 #define NC_SECURITYCONVERT(security) ((security < 3) ? security : (security == 3) ? 2 : (security < 7) ? 3 : 4)
@@ -34,32 +33,14 @@ constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 20;
 class BKScanResponseIterator : public Iterator<WiFiScanResponse>
 {
 public:
-    BKScanResponseIterator(const size_t size, const wifi_scan_result_t * scanResults) : mSize(size), mpScanResults(scanResults) {}
+    BKScanResponseIterator(const size_t size, const void * scanResults) : mSize(size), mpScanResults(scanResults) {}
     size_t Count() override { return mSize; }
-    bool Next(WiFiScanResponse & item) override
-    {
-        if (mIternum >= mSize)
-        {
-            return false;
-        }
-        ChipLogProgress(NetworkProvisioning, "Get AP num %d = %s\r\n", mIternum + 1, mpScanResults->aps[mIternum].ssid);
-        uint8_t ssidlenth = strlen(mpScanResults->aps[mIternum].ssid);
-        item.security.SetRaw(NC_SECURITYCONVERT(mpScanResults->aps[mIternum].security));
-        item.ssidLen  = ssidlenth;
-        item.channel  = mpScanResults->aps[mIternum].channel;
-        item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
-        item.rssi     = mpScanResults->aps[mIternum].rssi;
-        memcpy(item.ssid, mpScanResults->aps[mIternum].ssid, ssidlenth);
-        memcpy(item.bssid, mpScanResults->aps[mIternum].bssid, 6);
-
-        mIternum++;
-        return true;
-    }
-    void Release() override {}
+    bool Next(WiFiScanResponse & item) override;
+    void Release() override {};
 
 private:
     const size_t mSize;
-    const wifi_scan_result_t * mpScanResults;
+    const void * mpScanResults;
     size_t mIternum = 0;
 };
 
