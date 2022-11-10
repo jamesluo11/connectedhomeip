@@ -45,7 +45,6 @@
 
 #include <lib/support/BitFlags.h>
 
-//#include <wifi_conf.h>
 
 namespace chip {
 
@@ -150,8 +149,6 @@ private:
     friend ConnectivityManagerImpl & ConnectivityMgrImpl(void);
 
     static ConnectivityManagerImpl sInstance;
-    static void WiFiStationConnectedHandler();
-    static void wlan_status_cb(void *ctxt);
     void IpConnectedEventNotify(void);
 };
 

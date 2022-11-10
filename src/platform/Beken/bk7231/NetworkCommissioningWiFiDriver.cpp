@@ -23,8 +23,6 @@
 #include <limits>
 #include <string>
 
-#include "wlan_ui_pub.h"
-
 using namespace ::chip;
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 namespace chip {
@@ -37,6 +35,26 @@ constexpr char kWiFiCredentialsKeyName[] = "wifi-pass";
 
 } // namespace
 
+bool BKScanResponseIterator::Next(WiFiScanResponse & item)
+{
+    ScanResult_adv * apList = (ScanResult_adv *) mpScanResults;
+
+    if (mIternum >= mSize)
+    {
+        return false;
+    }
+    uint8_t ssidlenth = strlen(apList->ApList[mIternum].ssid);
+    item.security.SetRaw(NC_SECURITYCONVERT(apList->ApList[mIternum].security));
+    item.ssidLen = ssidlenth;
+    item.channel  = apList->ApList[mIternum].channel;
+    item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
+    item.rssi     = apList->ApList[mIternum].ApPower;
+    memcpy(item.ssid, apList->ApList[mIternum].ssid, ssidlenth);
+    memcpy(item.bssid, apList->ApList[mIternum].bssid, 6);
+
+    mIternum++;
+    return true;
+}
 
 
 CHIP_ERROR BekenWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)

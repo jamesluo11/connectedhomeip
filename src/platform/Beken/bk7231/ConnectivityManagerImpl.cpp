@@ -49,7 +49,7 @@
 
 #include "wlan_ui_pub.h"
 #include "flash_namespace_value.h"
-#include "NetworkCommissioningDriver.h"
+#include <platform/Beken/NetworkCommissioningDriver.h>
 
 #define BEKEN_WIFI_INFO   "BekenWiFi"
 static uint32_t dwWifiExit =  0;
@@ -64,6 +64,7 @@ namespace DeviceLayer {
 
 ConnectivityManagerImpl ConnectivityManagerImpl::sInstance;
 // NetworkCommissioning::BekenWiFiDriver::WiFiNetwork mWifiNetconf;
+static void wlan_status_cb(void *ctxt);
 
 // ==================== ConnectivityManager Platform Internal Methods ====================
 
@@ -202,7 +203,7 @@ CHIP_ERROR ConnectivityManagerImpl::_SetWiFiStationMode(WiFiStationMode val)
 
     if (mWiFiStationMode == kWiFiStationMode_Disabled && val == kWiFiStationMode_Enabled)
     {
-        bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
+        bk_wlan_status_register_cb(wlan_status_cb);
         ChangeWiFiStationState(kWiFiStationState_Connecting);
     }
 
@@ -326,7 +327,7 @@ void ConnectivityManagerImpl::_OnWiFiStationProvisionChange()
 }
 
 // ==================== ConnectivityManager Private Methods ====================
-void ConnectivityManagerImpl::WiFiStationConnectedHandler()
+static void WiFiStationConnectedHandler()
 {
     ChipDeviceEvent event;
     memset(&event, 0, sizeof(event));
@@ -335,7 +336,7 @@ void ConnectivityManagerImpl::WiFiStationConnectedHandler()
 }
 
 static bool stationConnected = false;
-void ConnectivityManagerImpl::wlan_status_cb(void *ctxt)
+static void wlan_status_cb(void *ctxt)
 {
     int notice_event = *(unsigned int*)ctxt;
     ssid_key_save_t wpa_save = {{0}};
@@ -466,7 +467,7 @@ void ConnectivityManagerImpl::DriveStationState()
                     network_InitTypeDef_st network_cfg;
                     
                     PersistedStorage::KeyValueStoreMgr().Get(BEKEN_WIFI_INFO, &fci,sizeof(ssid_key_save_t));
-                    bk_wlan_status_register_cb(ConnectivityManagerImpl().wlan_status_cb);
+                    bk_wlan_status_register_cb(wlan_status_cb);
 
                     memset(&network_cfg, 0, sizeof(network_InitTypeDef_st));
                     network_cfg.wifi_mode = BK_STATION;

@@ -18,39 +18,53 @@ import("${chip_root}/src/platform/device.gni")
 
 assert(chip_device_platform == "beken")
 
+
+declare_args() {
+  beken_soc = "bk7235"
+}
+
+assert(beken_soc == "bk7231" || beken_soc == "bk7235", "Unknown beken_soc: ${beken_soc}")
+
 static_library("Beken") {
   sources = [
     "../SingletonConfigurationManager.cpp",
-    "BLEManagerImpl.cpp",
-    "BLEManagerImpl.h",
-    "BekenConfig.cpp",
-    "BekenConfig.h",
-    "CHIPDevicePlatformConfig.h",
-    "CHIPDevicePlatformEvent.h",
-    "CHIPMem-Platform.cpp",
-    "ConfigurationManagerImpl.cpp",
-    "ConfigurationManagerImpl.h",
-    "ConnectivityManagerImpl.cpp",
-    "ConnectivityManagerImpl.h",
-
-    #"DeviceInfoProviderImpl.cpp",
-    #"DeviceInfoProviderImpl.h",
-    "DiagnosticDataProviderImpl.cpp",
-    "DiagnosticDataProviderImpl.h",
-    "FactoryDataProvider.cpp",
-    "FactoryDataProvider.h",
-    "KeyValueStoreManagerImpl.cpp",
-    "KeyValueStoreManagerImpl.h",
-    "Logging.cpp",
-    "LwIPCoreLock.cpp",
-    "NetworkCommissioningWiFiDriver.cpp",
-    "OTAImageProcessorImpl.cpp",
-    "OTAImageProcessorImpl.h",
-    "PlatformManagerImpl.cpp",
-    "PlatformManagerImpl.h",
-    "SystemPlatformConfig.h",
-    "SystemTimeSupport.cpp",
   ]
+  if(beken_soc == "bk7231"){
+    sources += [
+    "bk7231/BLEManagerImpl.cpp",
+    "bk7231/BekenConfig.cpp",
+    "bk7231/CHIPMem-Platform.cpp",
+    "bk7231/ConfigurationManagerImpl.cpp",
+    "bk7231/ConnectivityManagerImpl.cpp",
+    "bk7231/DiagnosticDataProviderImpl.cpp",
+    "bk7231/FactoryDataProvider.cpp",
+    "bk7231/KeyValueStoreManagerImpl.cpp",
+    "bk7231/Logging.cpp",
+    "bk7231/LwIPCoreLock.cpp",
+    "bk7231/NetworkCommissioningWiFiDriver.cpp",
+    "bk7231/OTAImageProcessorImpl.cpp",
+    "bk7231/PlatformManagerImpl.cpp",
+    "bk7231/SystemTimeSupport.cpp",
+    ]
+  }
+#  if(beken_soc == "bk7235"){
+#    sources += [
+#    "bk7235/BLEManagerImpl.cpp",
+#    "bk7235/BekenConfig.cpp",
+#    "bk7235/CHIPMem-Platform.cpp",
+#    "bk7235/ConfigurationManagerImpl.cpp",
+#    "bk7235/ConnectivityManagerImpl.cpp",
+#    "bk7235/DiagnosticDataProviderImpl.cpp",
+#    "bk7235/FactoryDataProvider.cpp",
+#    "bk7235/KeyValueStoreManagerImpl.cpp",
+#    "bk7235/Logging.cpp",
+#    "bk7235/LwIPCoreLock.cpp",
+#    "bk7235/NetworkCommissioningWiFiDriver.cpp",
+#    "bk7235/OTAImageProcessorImpl.cpp",
+#    "bk7235/PlatformManagerImpl.cpp",
+#    "bk7231/SystemTimeSupport.cpp",
+#    ]
+#  }
 
   deps = [
     "${chip_root}/src/lib/dnssd:platform_header",

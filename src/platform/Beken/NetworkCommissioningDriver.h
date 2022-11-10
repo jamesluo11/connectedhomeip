@@ -17,7 +17,6 @@
 
 #pragma once
 #include <platform/NetworkCommissioning.h>
-#include "wlan_ui_pub.h"
 
 #define NC_SECURITYCONVERT(security) ((security < 3) ? security : (security == 3) ? 2 : (security < 7) ? 3 : 4)
 
@@ -34,31 +33,14 @@ constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 20;
 class BKScanResponseIterator : public Iterator<WiFiScanResponse>
 {
 public:
-    BKScanResponseIterator(const size_t size, const ScanResult_adv * scanResults) : mSize(size), mpScanResults(scanResults) {}
+    BKScanResponseIterator(const size_t size, const void * scanResults) : mSize(size), mpScanResults(scanResults) {}
     size_t Count() override { return mSize; }
-    bool Next(WiFiScanResponse & item) override
-    {
-        if (mIternum >= mSize)
-        {
-            return false;
-        }
-        uint8_t ssidlenth = strlen(mpScanResults->ApList[mIternum].ssid);
-        item.security.SetRaw(NC_SECURITYCONVERT(mpScanResults->ApList[mIternum].security));
-        item.ssidLen = ssidlenth;
-        item.channel  = mpScanResults->ApList[mIternum].channel;
-        item.wiFiBand = chip::DeviceLayer::NetworkCommissioning::WiFiBand::k2g4;
-        item.rssi     = mpScanResults->ApList[mIternum].ApPower;
-        memcpy(item.ssid, mpScanResults->ApList[mIternum].ssid, ssidlenth);
-        memcpy(item.bssid, mpScanResults->ApList[mIternum].bssid, 6);
-
-        mIternum++;
-        return true;
-    }
-    void Release() override {}
+    bool Next(WiFiScanResponse & item) override;
+    void Release() override {};
 
 private:
     const size_t mSize;
-    const ScanResult_adv * mpScanResults;
+    const void * mpScanResults;
     size_t mIternum = 0;
 };
 
@@ -122,7 +104,7 @@ public:
         static BekenWiFiDriver instance;
         return instance;
     }
-    // CHIP_ERROR GetSavedNetWorkConfig(WiFiNetwork * WifiNetconf);
+    CHIP_ERROR GetSavedNetWorkConfig(WiFiNetwork * WifiNetconf);
 
 private:
     bool NetworkMatch(const WiFiNetwork & network, ByteSpan networkId);
