@@ -47,6 +47,24 @@ static_library("Beken") {
     "bk7235/SystemTimeSupport.cpp",
     ]
   }
+  if(beken_soc == "bk7231"){
+    sources += [
+    "bk7231/BLEManagerImpl.cpp",
+    "bk7231/BekenConfig.cpp",
+    "bk7231/CHIPMem-Platform.cpp",
+    "bk7231/ConfigurationManagerImpl.cpp",
+    "bk7231/ConnectivityManagerImpl.cpp",
+    "bk7231/DiagnosticDataProviderImpl.cpp",
+    "bk7231/FactoryDataProvider.cpp",
+    "bk7231/KeyValueStoreManagerImpl.cpp",
+    "bk7231/Logging.cpp",
+    "bk7231/LwIPCoreLock.cpp",
+    "bk7231/NetworkCommissioningWiFiDriver.cpp",
+    "bk7231/OTAImageProcessorImpl.cpp",
+    "bk7231/PlatformManagerImpl.cpp",
+    "bk7231/SystemTimeSupport.cpp",
+    ]
+  }
 
   deps = [
     "${chip_root}/src/lib/dnssd:platform_header",
