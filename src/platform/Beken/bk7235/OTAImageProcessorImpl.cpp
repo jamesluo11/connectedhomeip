@@ -198,6 +198,7 @@ void OTAImageProcessorImpl::HandleAbort(intptr_t context)
 void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 {
     auto * imageProcessor = reinterpret_cast<OTAImageProcessorImpl *>(context);
+    static uint32_t dw_flash_sector_addr = 0;
 
     if (imageProcessor == nullptr)
     {
@@ -268,7 +269,12 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
 
         // Erase update partition
         ChipLogProgress(SoftwareUpdate, "Erasing target partition...");
-        bk_erase_ota_data_in_flash();
+        //bk_erase_ota_data_in_flash();
+        dw_flash_sector_addr = 0;
+
+        bk_erase_ota_data_in_flash_per_sector( dw_flash_sector_addr);//erase the first sector.
+        dw_flash_sector_addr += NAME_SPACE_FLASH_TOTAL_SIZE;
+
         ChipLogProgress(SoftwareUpdate, "Erasing target partition...");
 
         if (0 != bk_write_ota_data_to_flash((char *) block.data(), imageProcessor->flash_data_offset, block.size()))
@@ -287,6 +293,12 @@ void OTAImageProcessorImpl::HandleProcessBlock(intptr_t context)
     }
     else // received subsequent blocks
     {
+        while ( dw_flash_sector_addr < imageProcessor->flash_data_offset + block.size()) // If this number is an integer multiple of 4K
+        {
+            bk_erase_ota_data_in_flash_per_sector( dw_flash_sector_addr);//erase the sector.
+            dw_flash_sector_addr += NAME_SPACE_FLASH_TOTAL_SIZE;
+        }
+
         if (0 != bk_write_ota_data_to_flash((char *) block.data(), imageProcessor->flash_data_offset, block.size()))
         {
             ChipLogError(SoftwareUpdate, "bk_write_ota_data_to_flash failed %s [%d] ", __FUNCTION__, __LINE__);
