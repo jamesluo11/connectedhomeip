@@ -23,6 +23,8 @@
 #ifndef _MATTER_PAL_H_
 #define _MATTER_PAL_H_
 
+#define BEKEN_SOC_BK7231
+
 #include "wlan_ui_pub.h"
 #include "ip6_addr.h"
 #include "net.h"
@@ -33,6 +35,7 @@
 #include "rtos_pub.h"
 #include "FreeRTOS.h"
 #include "timers.h"
+#include "BkDriverGpio.h"
 
 #endif // _MATTER_PAL_H_
 // eof

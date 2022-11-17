@@ -24,6 +24,7 @@
  **/
 
 #include "DeviceCallbacks.h"
+#include "LightingManager.h"
 
 #include <common/CHIPDeviceManager.h>
 
@@ -79,6 +80,10 @@ void AppDeviceCallbacks::OnOnOffPostAttributeChangeCallback(EndpointId endpointI
 
     // At this point we can assume that value points to a bool value.
     // statusLED1.Set(*value);
+    if (*value) 
+        LightingMgr().InitiateAction(LightingManager::ON_ACTION);
+    else
+        LightingMgr().InitiateAction(LightingManager::OFF_ACTION);
 
 exit:
     return;

@@ -23,6 +23,8 @@
 #ifndef _MATTER_PAL_H_
 #define _MATTER_PAL_H_
 
+#define BEKEN_SOC_BK7235
+
 #include <os/mem.h>
 #include <os/os.h>
 
@@ -39,6 +41,7 @@
 #include "BkDriverFlash.h"
 #else
 #include "driver/flash.h"
+#include "driver/gpio.h"
 #include <driver/flash_partition.h>
 #endif
 

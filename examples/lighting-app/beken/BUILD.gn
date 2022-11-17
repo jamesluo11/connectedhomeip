@@ -34,6 +34,7 @@ static_library("MatterApp") {
     "${examples_plat_dir}/ota/OTAHelper.cpp",
     "main/DeviceCallbacks.cpp",
     "main/DsoHack.cpp",
+    "main/LightingManager.cpp",
     "main/chipinterface.cpp",
   ]
 
