@@ -24,11 +24,14 @@
 #define _MATTER_PAL_H_
 
 #include "wlan_ui_pub.h"
+#include "ip6_addr.h"
+#include "net.h"
 #include "error.h"
 #include "flash_namespace_value.h"
 
 #include "ble_api_5_x.h"
 #include "rtos_pub.h"
+#include "FreeRTOS.h"
 #include "timers.h"
 
 #endif // _MATTER_PAL_H_
