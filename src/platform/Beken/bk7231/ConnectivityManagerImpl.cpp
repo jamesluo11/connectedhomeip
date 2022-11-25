@@ -52,7 +52,11 @@
 #include <platform/Beken/NetworkCommissioningDriver.h>
 
 #define BEKEN_WIFI_INFO   "BekenWiFi"
+#if CFG_BLE_USE_DYN_RAM
+uint32_t dwWifiExit =  0;
+#else
 static uint32_t dwWifiExit =  0;
+#endif
 
 using namespace ::chip;
 using namespace ::chip::Inet;

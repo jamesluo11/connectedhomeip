@@ -22,11 +22,15 @@
 #include <app/server/Dnssd.h>
 #include <app/util/util.h>
 #include <lib/support/CodeUtils.h>
-
+#if CFG_BLE_USE_DYN_RAM
+extern uint32_t dwWifiExit;
+#endif
 using namespace chip;
 using namespace chip::DeviceLayer;
 using namespace chip::System;
-
+#if CFG_BLE_USE_DYN_RAM
+extern "C" void ble_thread_exit(void);
+#endif
 void CommonDeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, intptr_t arg)
 {
     ChipLogProgress(Zcl, "DeviceEventCallback, event->Type:%d \r\n", event->Type);
@@ -57,6 +61,9 @@ void CommonDeviceCallbacks::DeviceEventCallback(const ChipDeviceEvent * event, i
         break;
     case DeviceEventType::kCommissioningComplete:
         ChipLogProgress(Zcl, "Commissioning complete");
+#if CFG_BLE_USE_DYN_RAM
+        ble_thread_exit();
+#endif                
         break;
     }
 }
@@ -67,6 +74,13 @@ void CommonDeviceCallbacks::OnInternetConnectivityChange(const ChipDeviceEvent *
     {
         ChipLogProgress(Zcl, "Server ready at:%d", CHIP_PORT);
         // we start dnssd when ipv6 is ready.
+#if CFG_BLE_USE_DYN_RAM
+        if(dwWifiExit==1)
+        {
+            ChipLogProgress(Zcl,"##exit ble thread");
+            ble_thread_exit();
+        }
+#endif
     }
     else if (event->InternetConnectivityChange.IPv4 == kConnectivity_Lost)
     {
