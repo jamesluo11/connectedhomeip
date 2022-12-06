@@ -25,7 +25,7 @@
 
 #include <lib/core/CHIPError.h>
 
-class LightingManager
+class BkLightingManager
 {
 public:
     enum Action_t
@@ -44,24 +44,29 @@ public:
     CHIP_ERROR Init();
     bool IsTurnedOn();
     bool InitiateAction(Action_t aAction);
+    void SetColor(uint8_t hue, uint8_t saturation);
+    void SetLevel(uint8_t level);
 
-    using LightingCallback_fn = std::function<void(Action_t)>;
+    using BkLightingCallback_fn = std::function<void(Action_t)>;
 
-    void SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB);
+    void SetCallbacks(BkLightingCallback_fn aActionInitiated_CB, BkLightingCallback_fn aActionCompleted_CB);
 
 private:
-    friend LightingManager & LightingMgr(void);
+    friend BkLightingManager & BkLightingMgr(void);
     State_t mState;
+    uint8_t mHue;
+    uint8_t mSaturation;
+    uint8_t mLevel;
 
-    LightingCallback_fn mActionInitiated_CB;
-    LightingCallback_fn mActionCompleted_CB;
+    BkLightingCallback_fn mActionInitiated_CB;
+    BkLightingCallback_fn mActionCompleted_CB;
 
     void Set(bool aOn);
 
-    static LightingManager sLight;
+    static BkLightingManager sLight;
 };
 
-inline LightingManager & LightingMgr(void)
+inline BkLightingManager & BkLightingMgr(void)
 {
-    return LightingManager::sLight;
+    return BkLightingManager::sLight;
 }

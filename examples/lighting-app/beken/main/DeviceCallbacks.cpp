@@ -24,7 +24,7 @@
  **/
 
 #include "DeviceCallbacks.h"
-#include "LightingManager.h"
+#include "BkLightingManager.h"
 
 #include <common/CHIPDeviceManager.h>
 
@@ -65,6 +65,14 @@ void AppDeviceCallbacks::PostAttributeChangeCallback(EndpointId endpointId, Clus
         OnIdentifyPostAttributeChangeCallback(endpointId, attributeId, value);
         break;
 
+    case ZCL_LEVEL_CONTROL_CLUSTER_ID:
+        OnLevelControlAttributeChangeCallback(endpointId, attributeId, value);
+        break;
+
+    case ZCL_COLOR_CONTROL_CLUSTER_ID:
+        OnColorControlAttributeChangeCallback(endpointId, attributeId, value);
+        break;
+
     default:
         ChipLogProgress(Zcl, "Unknown cluster ID: " ChipLogFormatMEI, ChipLogValueMEI(clusterId));
         break;
@@ -74,20 +82,58 @@ void AppDeviceCallbacks::PostAttributeChangeCallback(EndpointId endpointId, Clus
 void AppDeviceCallbacks::OnOnOffPostAttributeChangeCallback(EndpointId endpointId, AttributeId attributeId, uint8_t * value)
 {
     VerifyOrExit(attributeId == ZCL_ON_OFF_ATTRIBUTE_ID,
-                 ChipLogError(DeviceLayer, TAG, "Unhandled Attribute ID: '0x%04x", attributeId));
+                 ChipLogError(DeviceLayer, "[%s] Unhandled Attribute ID: '0x%04x", TAG, attributeId));
     VerifyOrExit(endpointId == 1 || endpointId == 2,
-                 ChipLogError(DeviceLayer, TAG, "Unexpected EndPoint ID: `0x%02x'", endpointId));
+                 ChipLogError(DeviceLayer, "[%s] Unexpected EndPoint ID: `0x%02x'", TAG, endpointId));
 
     // At this point we can assume that value points to a bool value.
     // statusLED1.Set(*value);
     if (*value) 
-        LightingMgr().InitiateAction(LightingManager::ON_ACTION);
+        BkLightingMgr().InitiateAction(BkLightingManager::ON_ACTION);
     else
-        LightingMgr().InitiateAction(LightingManager::OFF_ACTION);
+        BkLightingMgr().InitiateAction(BkLightingManager::OFF_ACTION);
 
 exit:
     return;
 }
+
+void AppDeviceCallbacks::OnLevelControlAttributeChangeCallback(chip::EndpointId endpointId, chip::AttributeId attributeId, uint8_t * value)
+{
+    VerifyOrExit(attributeId == ZCL_CURRENT_LEVEL_ATTRIBUTE_ID,
+                 ChipLogError(DeviceLayer, "[%s] Unhandled Attribute ID: '0x%04x", TAG, attributeId));
+    VerifyOrExit(endpointId == 1, ChipLogError(DeviceLayer, "[%s] Unexpected EndPoint ID: `0x%02x'", TAG, endpointId));
+
+    BkLightingMgr().SetLevel(*value);
+
+exit:
+    return;
+}
+
+void AppDeviceCallbacks::OnColorControlAttributeChangeCallback(chip::EndpointId endpointId, chip::AttributeId attributeId, uint8_t * value)
+{
+    uint8_t hue, saturation;
+
+    VerifyOrExit(attributeId == ZCL_COLOR_CONTROL_CURRENT_HUE_ATTRIBUTE_ID ||
+                     attributeId == ZCL_COLOR_CONTROL_CURRENT_SATURATION_ATTRIBUTE_ID,
+                 ChipLogError(DeviceLayer, "[%s] Unhandled AttributeId ID: '0x%04x", TAG, attributeId));
+    VerifyOrExit(endpointId == 1, ChipLogError(DeviceLayer, "[%s] Unexpected EndPoint ID: `0x%02x'", TAG, endpointId));
+
+    if (attributeId == ZCL_COLOR_CONTROL_CURRENT_HUE_ATTRIBUTE_ID)
+    {
+        hue = *value;
+        emberAfReadServerAttribute(endpointId, ZCL_COLOR_CONTROL_CLUSTER_ID, ZCL_COLOR_CONTROL_CURRENT_SATURATION_ATTRIBUTE_ID, &saturation, sizeof(uint8_t));
+    }
+    else
+    {
+        saturation = *value;
+        emberAfReadServerAttribute(endpointId, ZCL_COLOR_CONTROL_CLUSTER_ID, ZCL_COLOR_CONTROL_CURRENT_HUE_ATTRIBUTE_ID, &hue, sizeof(uint8_t));
+    }
+    BkLightingMgr().SetColor(hue, saturation);
+
+exit:
+    return;
+}
+
 
 void IdentifyTimerHandler(Layer * systemLayer, void * appState)
 {

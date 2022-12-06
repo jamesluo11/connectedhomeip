@@ -16,7 +16,7 @@
  */
 
 #include "DeviceCallbacks.h"
-#include "LightingManager.h"
+#include "BkLightingManager.h"
 
 #include <common/BekenAppServer.h>
 #include <common/CHIPDeviceManager.h>
@@ -192,7 +192,7 @@ static void InitServer(intptr_t context)
     SetCommissionableDataProvider(&mFactoryDataProvider);
     SetDeviceAttestationCredentialsProvider(&mFactoryDataProvider);
     OTAHelpers::Instance().InitOTARequestor();
-    LightingMgr().Init(); 
+    BkLightingMgr().Init(); 
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
 }
 

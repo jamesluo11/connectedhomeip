@@ -36,6 +36,7 @@
 #include "FreeRTOS.h"
 #include "timers.h"
 #include "BkDriverGpio.h"
+#include "BkDriverPwm.h"
 
 #endif // _MATTER_PAL_H_
 // eof

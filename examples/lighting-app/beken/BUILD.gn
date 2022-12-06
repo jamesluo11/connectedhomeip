@@ -20,6 +20,7 @@ examples_plat_dir = "${chip_root}/examples/platform/beken"
 static_library("MatterApp") {
   public_deps = [
     "${chip_root}/examples/lighting-app/lighting-common",
+    "${chip_root}/examples/lighting-app/lighting-common:color-format",
   ]
 
   include_dirs = [
@@ -34,7 +35,7 @@ static_library("MatterApp") {
     "${examples_plat_dir}/ota/OTAHelper.cpp",
     "main/DeviceCallbacks.cpp",
     "main/DsoHack.cpp",
-    "main/LightingManager.cpp",
+    "main/BkLightingManager.cpp",
     "main/chipinterface.cpp",
   ]
 
