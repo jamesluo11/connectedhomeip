@@ -264,12 +264,12 @@ CHIP_ERROR BekenWiFiDriver::StartScanWiFiNetworks(ByteSpan ssid)
     CHIP_ERROR err          = CHIP_NO_ERROR;
     if (ssid.data())//directed scanning
     {
-        uint8_t **ssid_array;
-        uint8_t *oob_ssid = (uint8_t*)malloc(ssid.size()*sizeof(uint8_t));
-        memcpy(oob_ssid,ssid.data(),ssid.size());
-        ChipLogProgress(NetworkProvisioning, "directed scanning... ssid:%s ; %d \r\n",oob_ssid,ssid.size());
-        ssid_array = &oob_ssid;
-	    bk_wlan_start_assign_scan(ssid_array, 1);
+        uint8_t *ssid_array = (uint8_t *)malloc(sizeof(uint8_t)*(ssid.size()+1));
+        memcpy(ssid_array, ssid.data(), ssid.size());
+        ssid_array[ssid.size()] = '\0';
+        ChipLogProgress(NetworkProvisioning, "directed scanning... ssid:[%s]; %d\r\n", ssid_array, ssid.size());
+        bk_wlan_start_assign_scan(&ssid_array, 1);
+        free(ssid_array);
     }
     else//non-directed scanning
     {
