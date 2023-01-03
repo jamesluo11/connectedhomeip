@@ -85,7 +85,7 @@ extern "C" void BkQueryImageCmdHandler(char * pcWriteBuffer, int xWriteBufferLen
 
     for (dwLoop = 0; dwLoop < argc; dwLoop++)
     {
-        ChipLogProgress(DeviceLayer, "QueryImageArgument %d = %s\r\n", dwLoop + 1, argv[dwLoop]);
+        ChipLogProgress(DeviceLayer, "QueryImageArgument %ld = %s\r\n", dwLoop + 1, argv[dwLoop]);
     }
 
     if (argc == 3)
@@ -125,7 +125,7 @@ extern "C" void BkNotifyUpdateApplied(char * pcWriteBuffer, int xWriteBufferLen,
 
     for (dwLoop = 0; dwLoop < argc; dwLoop++)
     {
-        ChipLogProgress(DeviceLayer, "NotifyUpdateApplied %d = %s\r\n", dwLoop + 1, argv[dwLoop]);
+        ChipLogProgress(DeviceLayer, "NotifyUpdateApplied %ld = %s\r\n", dwLoop + 1, argv[dwLoop]);
     }
 
     if (argc == 2)
