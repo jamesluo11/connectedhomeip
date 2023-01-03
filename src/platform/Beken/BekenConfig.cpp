@@ -246,7 +246,7 @@ CHIP_ERROR BekenConfig::WriteConfigValue(Key key, uint16_t val)
 
     success = bk_write_data(key.Namespace, key.Name, (char *) &val, sizeof(val));
     if (kNoErr != success)
-        ChipLogError(DeviceLayer, "bk_write_data: %s  %s = %lu(0x%lx) failed\n", (char *) key.Namespace, (char *) key.Name, val,
+        ChipLogError(DeviceLayer, "bk_write_data: %s  %s = %u(0x%x) failed\n", (char *) key.Namespace, (char *) key.Name, val,
                      val);
 
     return CHIP_NO_ERROR;
