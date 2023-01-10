@@ -114,7 +114,8 @@ void AppDeviceCallbacks::OnColorControlAttributeChangeCallback(chip::EndpointId 
     uint8_t hue, saturation;
 
     VerifyOrExit(attributeId == ZCL_COLOR_CONTROL_CURRENT_HUE_ATTRIBUTE_ID ||
-                     attributeId == ZCL_COLOR_CONTROL_CURRENT_SATURATION_ATTRIBUTE_ID,
+                 attributeId == ZCL_COLOR_CONTROL_CURRENT_SATURATION_ATTRIBUTE_ID ||
+                 attributeId == ZCL_COLOR_CONTROL_COLOR_TEMPERATURE_ATTRIBUTE_ID,
                  ChipLogError(DeviceLayer, "[%s] Unhandled AttributeId ID: '0x%04x", TAG, attributeId));
     VerifyOrExit(endpointId == 1, ChipLogError(DeviceLayer, "[%s] Unexpected EndPoint ID: `0x%02x'", TAG, endpointId));
 
@@ -122,14 +123,18 @@ void AppDeviceCallbacks::OnColorControlAttributeChangeCallback(chip::EndpointId 
     {
         hue = *value;
         emberAfReadServerAttribute(endpointId, ZCL_COLOR_CONTROL_CLUSTER_ID, ZCL_COLOR_CONTROL_CURRENT_SATURATION_ATTRIBUTE_ID, &saturation, sizeof(uint8_t));
+        BkLightingMgr().SetColor(hue, saturation);
     }
-    else
+    if (attributeId == ZCL_COLOR_CONTROL_CURRENT_SATURATION_ATTRIBUTE_ID )
     {
         saturation = *value;
         emberAfReadServerAttribute(endpointId, ZCL_COLOR_CONTROL_CLUSTER_ID, ZCL_COLOR_CONTROL_CURRENT_HUE_ATTRIBUTE_ID, &hue, sizeof(uint8_t));
+        BkLightingMgr().SetColor(hue, saturation);
     }
-    BkLightingMgr().SetColor(hue, saturation);
-
+    if (attributeId == ZCL_COLOR_CONTROL_COLOR_TEMPERATURE_ATTRIBUTE_ID)
+    {
+        BkLightingMgr().SetTemperature(*(uint16_t *)value);
+    }
 exit:
     return;
 }

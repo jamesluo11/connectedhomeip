@@ -46,6 +46,7 @@ public:
     bool InitiateAction(Action_t aAction);
     void SetColor(uint8_t hue, uint8_t saturation);
     void SetLevel(uint8_t level);
+    void SetTemperature(uint16_t temperature);
 
     using BkLightingCallback_fn = std::function<void(Action_t)>;
 

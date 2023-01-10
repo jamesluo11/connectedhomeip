@@ -171,6 +171,11 @@ void BkLightingManager::SetLevel(uint8_t level)
     lighting_color_set(rgb.r, rgb.g, rgb.b);
 }
 
+void BkLightingManager::SetTemperature(uint16_t temperature)
+{
+    ChipLogProgress(DeviceLayer, "temperature update %x", temperature);
+}
+
 void BkLightingManager::Set(bool aOn)
 {
     if (aOn)
