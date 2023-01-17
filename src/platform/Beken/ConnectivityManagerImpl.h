@@ -44,6 +44,7 @@
 #endif
 
 #include <lib/support/BitFlags.h>
+#include <platform/Beken/NetworkCommissioningDriver.h>
 
 
 namespace chip {
@@ -111,6 +112,7 @@ private:
     WiFiStationState mWiFiStationState;
     System::Clock::Timeout mWiFiStationReconnectInterval;
     BitFlags<Flags> mFlags;
+    uint16_t mkBKEventType;
 
     void DriveStationState(void);
     void OnStationConnected(void);
@@ -135,6 +137,16 @@ private:
 };
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+inline ConnectivityManager::WiFiStationMode ConnectivityManagerImpl::_GetWiFiStationMode(void)
+{
+    return mWiFiStationMode;
+}
+
+inline bool ConnectivityManagerImpl::_IsWiFiStationEnabled(void)
+{
+    return mWiFiStationMode == kWiFiStationMode_Enabled;
+}
+
 inline bool ConnectivityManagerImpl::_IsWiFiStationApplicationControlled(void)
 {
     return mWiFiStationMode == kWiFiStationMode_ApplicationControlled;

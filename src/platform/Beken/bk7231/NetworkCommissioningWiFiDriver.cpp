@@ -160,7 +160,7 @@ Status BekenWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, Mutabl
 CHIP_ERROR BekenWiFiDriver::ConnectWiFiNetwork(const char * ssid, uint8_t ssidLen, const char * key, uint8_t keyLen)
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::ConnectWiFiNetwork....ssid:%s", ssid);
-    ReturnErrorOnFailure(ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled));
+    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
 
     network_InitTypeDef_st network_cfg;
 
@@ -172,7 +172,7 @@ CHIP_ERROR BekenWiFiDriver::ConnectWiFiNetwork(const char * ssid, uint8_t ssidLe
     network_cfg.dhcp_mode = DHCP_CLIENT;
     bk_wlan_start(&network_cfg);
 	
-    return ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
+    return CHIP_NO_ERROR;
 }
 
 void BekenWiFiDriver::OnConnectWiFiNetwork()
@@ -180,9 +180,14 @@ void BekenWiFiDriver::OnConnectWiFiNetwork()
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::OnConnectWiFiNetwork\r\n");
     if (mpConnectCallback)
     {
-        chip::DeviceLayer::PlatformMgr().LockChipStack();
-        mpConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
-        chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+        if (ConnectivityMgr().IsWiFiStationConnected())
+        {
+            mpConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
+        }
+        else
+        {
+            mpConnectCallback->OnResult(Status::kUnknownError, CharSpan(), 0);
+        }
         mpConnectCallback = nullptr;
     }
 }

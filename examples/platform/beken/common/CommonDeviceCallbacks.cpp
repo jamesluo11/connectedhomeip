@@ -89,7 +89,6 @@ void CommonDeviceCallbacks::OnInternetConnectivityChange(const ChipDeviceEvent *
     if (event->InternetConnectivityChange.IPv6 == kConnectivity_Established)
     {
         ChipLogProgress(Zcl, "IPv6 Server ready...");
-        chip::app::DnssdServer::Instance().StartServer();
     }
     else if (event->InternetConnectivityChange.IPv6 == kConnectivity_Lost)
     {
