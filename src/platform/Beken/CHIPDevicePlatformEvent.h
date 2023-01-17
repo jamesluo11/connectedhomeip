@@ -48,7 +48,16 @@ enum InternalPlatformSpecificEventTypes
     kCHIPoBLECCCWriteEvent,
     kCHIPoBLERXCharWriteEvent,
     kCHIPoBLETXCharWriteEvent,
-    kRtkWiFiStationConnectedEvent,
+    kBKWiFiRW_EVT_STA_IDLE_Event,
+    kBKWIFIRW_EVT_STA_CONNECTING_Event,
+    kBKWIFIRW_EVT_STA_BEACON_LOSE_Event,
+    kBKWIFIRW_EVT_STA_PASSWORD_WRONG_Event,
+    kBKWIFIRW_EVT_STA_NO_AP_FOUND_Event,
+    kBKWIFIRW_EVT_STA_ASSOC_FULL_Event,
+    kBKWIFIRW_EVT_STA_DISCONNECTED_Event, /* disconnect with server */
+    kBKWIFIRW_EVT_STA_CONNECT_FAILED_Event, /* authentication failed */
+    kBKWIFIRW_EVT_STA_CONNECTED_Event, /* authentication success */
+    kBKWIFIRW_EVT_STA_GOT_IP_Event,
 };
 
 } // namespace DeviceEventType
