@@ -63,6 +63,7 @@ CHIP_ERROR BekenWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChan
     CHIP_ERROR err;
     size_t ssidLen        = 0;
     size_t credentialsLen = 0;
+    mSavedNetwork.ssidLen = 0;
 
     err = PersistedStorage::KeyValueStoreMgr().Get(kWiFiCredentialsKeyName, mSavedNetwork.credentials,
                                                    sizeof(mSavedNetwork.credentials), &credentialsLen);
@@ -83,6 +84,13 @@ CHIP_ERROR BekenWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChan
     mpScanCallback               = nullptr;
     mpConnectCallback            = nullptr;
     mpStatusChangeCallback       = networkStatusChangeCallback;
+    if (mStagingNetwork.ssidLen != 0)
+    {
+        ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
+        ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_ApplicationControlled);
+        ConnectWiFiNetwork(reinterpret_cast<const char *>(mStagingNetwork.ssid), mStagingNetwork.ssidLen,
+                           reinterpret_cast<const char *>(mStagingNetwork.credentials), mStagingNetwork.credentialsLen);
+    }
     return err;
 }
 
@@ -160,7 +168,6 @@ Status BekenWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, Mutabl
 CHIP_ERROR BekenWiFiDriver::ConnectWiFiNetwork(const char * ssid, uint8_t ssidLen, const char * key, uint8_t keyLen)
 {
     ChipLogProgress(NetworkProvisioning, "BekenWiFiDriver::ConnectWiFiNetwork....ssid:%s", ssid);
-    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
 
     network_InitTypeDef_st network_cfg;
 
@@ -201,6 +208,7 @@ void BekenWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callb
     VerifyOrExit(NetworkMatch(mStagingNetwork, networkId), networkingStatus = Status::kNetworkIDNotFound);
     VerifyOrExit(mpConnectCallback == nullptr, networkingStatus = Status::kUnknownError);
 
+    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
     err               = ConnectWiFiNetwork(reinterpret_cast<const char *>(mStagingNetwork.ssid), mStagingNetwork.ssidLen,
                              reinterpret_cast<const char *>(mStagingNetwork.credentials), mStagingNetwork.credentialsLen);
     mpConnectCallback = callback;
