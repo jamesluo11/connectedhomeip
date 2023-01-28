@@ -1058,6 +1058,11 @@ void BLEManagerImpl::beken_ble_cmd_cb(ble_cmd_t cmd, ble_cmd_param_t * param)
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
         break;
     case BLE_START_ADV: {
+        if (param->status != ERR_SUCCESS)
+        {
+            bk_ble_disconnect(param->cmd_idx, beken_ble_cmd_cb);
+            break;
+        }
         uint32_t bleAdvTimeoutMs;
         sInstance.mFlags.Set(Flags::kBEKENBLEADVStarted);
         if (sInstance.mFlags.Has(Flags::kAdvertisingIsFastADV)){
@@ -1084,6 +1089,7 @@ void BLEManagerImpl::beken_ble_cmd_cb(ble_cmd_t cmd, ble_cmd_param_t * param)
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
         break;
     case BLE_CONN_DIS_CONN:
+        PlatformMgr().ScheduleWork(DriveBLEState, 0);
         break;
     default:
         break;
