@@ -281,6 +281,31 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     {
         ChipLogError(DeviceLayer, "ClearNamespace(ChipConfig) failed: %s", chip::ErrorStr(err));
     }
+    err = BekenConfig::ClearNamespace("BEKEN0");
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace(BEKEN0) failed: %s", chip::ErrorStr(err));
+    }
+    err = BekenConfig::ClearNamespace("BEKEN1");
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace(BEKEN1) failed: %s", chip::ErrorStr(err));
+    }
+    err = BekenConfig::ClearNamespace("BEKEN2");
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace(BEKEN2) failed: %s", chip::ErrorStr(err));
+    }
+    err = BekenConfig::ClearNamespace("BEKEN3");
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace(BEKEN3) failed: %s", chip::ErrorStr(err));
+    }
+    err = BekenConfig::ClearNamespace("BEKEN4");
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "ClearNamespace(BEKEN4) failed: %s", chip::ErrorStr(err));
+    }
 
     // Restart the system.
     ChipLogProgress(DeviceLayer, "System restarting");

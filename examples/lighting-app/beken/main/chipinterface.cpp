@@ -195,6 +195,9 @@ static void InitServer(intptr_t context)
     BkLightingMgr().Init(); 
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
 }
+extern "C" void matter_factory_reset(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv ){
+    Server::GetInstance().ScheduleFactoryReset();
+}
 
 extern "C" void ChipTest(void)
 {
