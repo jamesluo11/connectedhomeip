@@ -190,7 +190,11 @@ static void InitServer(intptr_t context)
 {
     BekenAppServer::Init();
     SetCommissionableDataProvider(&mFactoryDataProvider);
+#if CONFIG_ENABLE_BEKEN_DEVICE_INFO
     SetDeviceAttestationCredentialsProvider(&mFactoryDataProvider);
+#else
+    SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
+#endif
     OTAHelpers::Instance().InitOTARequestor();
     BkLightingMgr().Init(); 
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
